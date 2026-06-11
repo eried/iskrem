@@ -79,6 +79,11 @@ details.acc>summary small{font-family:var(--font-body);color:var(--ink-faint);fo
 .chip.on{background:var(--sage);color:#fff;border-color:var(--sage);}
 .chip.tag.on{background:var(--berry);border-color:var(--berry);}
 .chip .x{opacity:.6;margin-left:5px;}
+.grouphd{width:100%;display:flex;align-items:center;gap:8px;font-family:var(--font-body);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;margin:9px 0 3px;padding:0;background:none;border:0;cursor:pointer;text-align:left;}
+.grouphd:hover{color:var(--sage);}
+.grouphd .ga{font-size:.92em;letter-spacing:.02em;text-transform:none;font-weight:500;color:var(--sage);border-bottom:1px dotted var(--line);}
+.grouphd.allon{color:var(--berry);}
+.grouphd.allon .ga{color:var(--berry);border-color:var(--berry);}
 .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .andor{display:inline-flex;border:1px solid var(--line);border-radius:30px;overflow:hidden;}
 .andor button{border:0;background:var(--white);color:var(--ink-soft);font-family:var(--font-body);font-weight:600;font-size:.72rem;letter-spacing:.08em;padding:6px 12px;cursor:pointer;}
@@ -132,13 +137,23 @@ details.acc>summary small{font-family:var(--font-body);color:var(--ink-faint);fo
 .tg:hover{color:var(--ink);background:var(--line-soft);}
 .card-spacer{flex:1;}
 
+/* clickable cards + focus reading mode */
+#grid .card{cursor:pointer;transition:box-shadow .16s ease,transform .16s ease,border-color .16s ease;}
+#grid .card:hover{box-shadow:0 10px 30px rgba(35,36,29,.12);transform:translateY(-3px);border-color:var(--sage);}
+.focus{position:fixed;inset:0;z-index:100;background:rgba(35,36,29,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:48px 18px 64px;}
+.focus[hidden]{display:none;}
+.focus-inner{max-width:600px;width:100%;}
+.focus-inner .card{cursor:default;box-shadow:0 24px 70px rgba(35,36,29,.32);}
+.focus-close{position:fixed;top:16px;right:18px;z-index:101;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--white);color:var(--ink);font-size:1.5rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.focus-close:hover{border-color:var(--sage);color:var(--sage);}
+
 footer{margin-top:50px;border-top:1px solid var(--line);padding:34px 0 60px;color:var(--ink-faint);font-size:.84rem;}
 footer h4{font-family:var(--font-body);font-weight:600;letter-spacing:.16em;text-transform:uppercase;font-size:.72rem;color:var(--sage);margin-bottom:10px;}
 footer p{max-width:80ch;margin:0 0 9px;}
 
 @media print{
   @page{size:A4;margin:13mm;} body::before{display:none;} body{background:#fff;}
-  .filterbar,.guide details:not([open]){display:none;}
+  .filterbar,.guide details:not([open]),.focus,.focus-close{display:none;}
   .grid{display:block;} .card{page-break-inside:avoid;break-inside:avoid;margin-bottom:8mm;}
   .card::before,.macro.hero,.tip,.idx .dots .on{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 }
@@ -252,11 +267,11 @@ footer p{max-width:80ch;margin:0 0 9px;}
       <div class="fgroup">
         <h5>Filter by ingredient
           <span class="toolbar" style="display:inline-flex"><span class="andor"><button id="ingAnyBtn" class="on">Uses any</button><button id="ingAllBtn">Uses all</button><button id="ingMakeBtn">Can make</button></span></span>
-          <span class="mini" id="tickHave">tick what I have/ordered</span> · <span class="mini" id="clearHave">clear</span></h5>
+          <span class="mini" id="tickHave">tick what I have/ordered</span> · <span class="mini" id="allHave">select all</span> · <span class="mini" id="clearHave">clear</span></h5>
         <div class="chips" id="ingChips"></div>
       </div>
       <div class="fgroup">
-        <h5>Tags &amp; categories <span class="toolbar" style="display:inline-flex"><span class="andor"><button id="orBtn" class="on">Any</button><button id="andBtn">All</button></span></span></h5>
+        <h5>Tags &amp; categories <span class="toolbar" style="display:inline-flex"><span class="andor"><button id="orBtn" class="on">Any</button><button id="andBtn">All</button></span></span> <span class="mini" id="allTags">select all</span> · <span class="mini" id="clearTags">clear</span></h5>
         <div class="chips" id="tagChips"></div>
       </div>
     </div>
@@ -274,6 +289,12 @@ footer p{max-width:80ch;margin:0 0 9px;}
     <p><b>Indices</b> (filled = more): Protein, Creamy, Sweet, Re-spin (churning needed), Laxative (sugar-alcohol load for the whole pot at once) + Caffeine where relevant. <b>Ingredient filter:</b> "Uses any" shows recipes containing any ingredient you pick, "Uses all" needs all of them, and "Can make" hides recipes needing an ingredient you haven't ticked (water, salt &amp; lemon are assumed on hand — use "tick what I have/ordered" to fill your pantry).</p>
     <p style="color:var(--ink-faint);font-size:.8rem;">FROST — Gladkokken 12-in-1. Classic recipes adapted from the official Gladkokken oppskrifter booklet.</p>
   </footer>
+</div>
+
+<!-- FOCUS / READING MODE -->
+<div class="focus" id="focus" hidden>
+  <button class="focus-close" id="focusClose" title="Close (Esc)" aria-label="Close recipe">×</button>
+  <div class="focus-inner" id="focusInner"></div>
 </div>
 
 <script>
@@ -880,7 +901,7 @@ function cardHTML(r){
   var steps=r.method.map(function(m){return '<li>'+m+'</li>';}).join('');
   var tags=r.tags.map(function(t){return '<span class="tg" data-tag="'+t+'">'+((TAGS[t]||{}).l||t)+'</span>';}).join('');
   var caf=r.idx[3]>0;
-  return '<article class="card '+r.cat+'">'
+  return '<article class="card '+r.cat+'" data-no="'+r.no+'">'
     +'<div class="card-head"><div class="card-ic"><svg><use href="#'+r.icon+'"/></svg></div>'
     +'<div class="card-titles"><div class="card-tag">'+r.catL+'</div><h3>'+esc(r.name)+'</h3><div class="card-no">No. '+r.no+'</div></div></div>'
     +'<p class="card-desc">'+r.desc+'</p>'
@@ -903,7 +924,8 @@ function render(){
   document.getElementById('empty').style.display=list.length?'none':'block';
   document.getElementById('count').textContent=list.length+' of '+RECIPES.length+' recipes';
   renderActive();
-  document.querySelectorAll('.tg').forEach(function(el){el.onclick=function(){toggleTag(el.dataset.tag);};});
+  document.querySelectorAll('#grid .tg').forEach(function(el){el.onclick=function(ev){ev.stopPropagation();toggleTag(el.dataset.tag);};});
+  document.querySelectorAll('#grid .card').forEach(function(el){el.onclick=function(){openFocus(+el.dataset.no);};});
 }
 
 /* ============================ FILTER UI ============================ */
@@ -912,7 +934,7 @@ function buildChips(){
   var groups={}; Object.keys(ING).forEach(function(k){var g=ING[k].g;(groups[g]=groups[g]||[]).push(k);});
   var html='';
   Object.keys(groups).forEach(function(g){
-    html+='<div style="width:100%;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin:6px 0 2px;font-weight:600">'+g+'</div>';
+    html+='<button type="button" class="grouphd" data-ig="'+esc(g)+'">'+esc(g)+' <span class="ga">all</span></button>';
     groups[g].forEach(function(k){html+='<span class="chip ing" data-k="'+k+'">'+esc(ING[k].n)+'</span>';});
   });
   document.getElementById('ingChips').innerHTML=html;
@@ -920,19 +942,27 @@ function buildChips(){
   var tg={}; Object.keys(TAGS).forEach(function(k){var g=TAGS[k].g;(tg[g]=tg[g]||[]).push(k);});
   var th='';
   Object.keys(tg).forEach(function(g){
-    th+='<div style="width:100%;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin:6px 0 2px;font-weight:600">'+g+'</div>';
+    th+='<button type="button" class="grouphd" data-tg="'+esc(g)+'">'+esc(g)+' <span class="ga">all</span></button>';
     tg[g].forEach(function(k){th+='<span class="chip tag" data-t="'+k+'">'+esc(TAGS[k].l)+'</span>';});
   });
   document.getElementById('tagChips').innerHTML=th;
   document.querySelectorAll('.chip.ing').forEach(function(el){el.onclick=function(){toggleHave(el.dataset.k);};});
   document.querySelectorAll('.chip.tag').forEach(function(el){el.onclick=function(){toggleTag(el.dataset.t);};});
+  document.querySelectorAll('.grouphd[data-ig]').forEach(function(el){el.onclick=function(){toggleIngGroup(el.dataset.ig);};});
+  document.querySelectorAll('.grouphd[data-tg]').forEach(function(el){el.onclick=function(){toggleTagGroup(el.dataset.tg);};});
 }
+function ingGroupKeys(g){return Object.keys(ING).filter(function(k){return ING[k].g===g;});}
+function tagGroupKeys(g){return Object.keys(TAGS).filter(function(k){return TAGS[k].g===g;});}
 function syncChips(){
   document.querySelectorAll('.chip.ing').forEach(function(el){el.classList.toggle('on',state.have.has(el.dataset.k));});
   document.querySelectorAll('.chip.tag').forEach(function(el){el.classList.toggle('on',state.tags.has(el.dataset.t));});
+  document.querySelectorAll('.grouphd[data-ig]').forEach(function(el){var ks=ingGroupKeys(el.dataset.ig),on=ks.length&&ks.every(function(k){return state.have.has(k);});el.classList.toggle('allon',on);var ga=el.querySelector('.ga');if(ga)ga.textContent=on?'clear':'all';});
+  document.querySelectorAll('.grouphd[data-tg]').forEach(function(el){var ks=tagGroupKeys(el.dataset.tg),on=ks.length&&ks.every(function(k){return state.tags.has(k);});el.classList.toggle('allon',on);var ga=el.querySelector('.ga');if(ga)ga.textContent=on?'clear':'all';});
 }
 function toggleHave(k){state.have.has(k)?state.have.delete(k):state.have.add(k);syncChips();render();}
 function toggleTag(t){state.tags.has(t)?state.tags.delete(t):state.tags.add(t);syncChips();render();}
+function toggleIngGroup(g){var ks=ingGroupKeys(g),allOn=ks.length&&ks.every(function(k){return state.have.has(k);});ks.forEach(function(k){allOn?state.have.delete(k):state.have.add(k);});syncChips();render();}
+function toggleTagGroup(g){var ks=tagGroupKeys(g),allOn=ks.length&&ks.every(function(k){return state.tags.has(k);});ks.forEach(function(k){allOn?state.tags.delete(k):state.tags.add(k);});syncChips();render();}
 function renderActive(){
   var el=document.getElementById('activeRow');var parts=[];
   if(state.have.size) parts.push('<span class="lab">'+(state.haveMode==='make'?'Have':'Ingredients')+':</span>'+[...state.have].map(function(k){return '<span class="chip on ing" data-k="'+k+'">'+esc((ING[k]||{}).n||k)+' <span class="x">×</span></span>';}).join(''));
@@ -956,7 +986,17 @@ document.getElementById('q').oninput=function(){state.q=this.value.trim();render
 document.getElementById('orBtn').onclick=function(){state.tagMode='or';this.classList.add('on');document.getElementById('andBtn').classList.remove('on');render();};
 document.getElementById('andBtn').onclick=function(){state.tagMode='and';this.classList.add('on');document.getElementById('orBtn').classList.remove('on');render();};
 document.getElementById('tickHave').onclick=function(){OWNED.forEach(function(k){state.have.add(k);});syncChips();setHaveMode('make');};
+document.getElementById('allHave').onclick=function(){Object.keys(ING).forEach(function(k){state.have.add(k);});syncChips();render();};
 document.getElementById('clearHave').onclick=function(){state.have.clear();syncChips();render();};
+document.getElementById('allTags').onclick=function(){Object.keys(TAGS).forEach(function(k){state.tags.add(k);});syncChips();render();};
+document.getElementById('clearTags').onclick=function(){state.tags.clear();syncChips();render();};
+
+/* focus / reading mode */
+function openFocus(no){var r=RECIPES.filter(function(x){return x.no===no;})[0];if(!r)return;document.getElementById('focusInner').innerHTML=cardHTML(r);document.getElementById('focus').hidden=false;document.body.style.overflow='hidden';}
+function closeFocus(){document.getElementById('focus').hidden=true;document.body.style.overflow='';}
+document.getElementById('focusClose').onclick=closeFocus;
+document.getElementById('focus').onclick=function(ev){if(ev.target===this)closeFocus();};
+document.addEventListener('keydown',function(ev){if(ev.key==='Escape')closeFocus();});
 
 buildChips();syncChips();render();
 </script>
