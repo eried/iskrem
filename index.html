@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FROST — Creami Recipe Database</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --paper:#F4F1E9; --paper-2:#ECE7DB; --white:#FBFAF6;
+  --ink:#23241D; --ink-soft:#5C5A4E; --ink-faint:#8B8779;
+  --sage:#6E7F69; --sage-deep:#4C5A48; --line:#D9D3C4; --line-soft:#E5E0D3;
+  --berry:#9C4E63; --amber:#B07A3C;
+  --font-display:'Fraunces','Iowan Old Style','Palatino Linotype',Georgia,serif;
+  --font-body:'Hanken Grotesk','Avenir Next','Segoe UI',system-ui,sans-serif;
+  --wrap:1120px;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:var(--font-body);color:var(--ink);background:var(--paper);line-height:1.6;-webkit-font-smoothing:antialiased;position:relative;}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;mix-blend-mode:multiply;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");}
+.wrap{position:relative;z-index:1;max-width:var(--wrap);margin:0 auto;padding:0 24px;}
+a{color:var(--sage-deep);text-decoration:none;border-bottom:1px solid var(--line);}
+a:hover{color:var(--ink);border-color:var(--sage);}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:400;margin:0;letter-spacing:-.01em;}
+.eyebrow{font-family:var(--font-body);font-weight:600;font-size:.72rem;letter-spacing:.26em;text-transform:uppercase;color:var(--sage);}
+
+/* masthead */
+.masthead{padding:42px 0 18px;text-align:center;}
+.logo{font-family:var(--font-display);font-weight:300;font-size:clamp(3rem,11vw,6rem);line-height:.9;letter-spacing:.04em;margin:.12em 0 .08em;}
+.logo .dot{color:var(--sage);}
+.tagline{font-family:var(--font-display);font-style:italic;font-size:clamp(1rem,2.3vw,1.35rem);color:var(--ink-soft);max-width:36ch;margin:0 auto;}
+.machine-line{margin-top:10px;color:var(--ink-faint);font-size:.88rem;}
+
+/* collapsible guide */
+.guide{margin:22px 0 6px;}
+details.acc{border:1px solid var(--line);border-radius:4px;background:var(--white);margin:8px 0;overflow:hidden;}
+details.acc>summary{list-style:none;cursor:pointer;padding:15px 20px;display:flex;align-items:center;gap:12px;font-family:var(--font-display);font-size:1.12rem;color:var(--ink);}
+details.acc>summary::-webkit-details-marker{display:none;}
+details.acc>summary .chev{margin-left:auto;color:var(--sage);transition:transform .25s;font-size:.9rem;}
+details.acc[open]>summary .chev{transform:rotate(90deg);}
+details.acc>summary .sic{width:22px;height:22px;color:var(--sage);flex:none;}
+details.acc>summary small{font-family:var(--font-body);color:var(--ink-faint);font-size:.8rem;font-weight:400;margin-left:4px;}
+.acc-body{padding:4px 22px 22px;border-top:1px solid var(--line-soft);}
+.acc-body p{color:var(--ink-soft);font-size:.94rem;}
+.acc-body .lead{font-size:1rem;}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:2px 0;margin:6px 0;}
+.step{padding:6px 18px 14px 0;}
+.step .n{font-family:var(--font-display);font-size:1.4rem;color:var(--sage);}
+.step h4{font-size:.98rem;margin:6px 0 3px;font-family:var(--font-body);font-weight:600;}
+.step p{margin:0;font-size:.86rem;}
+.science{display:grid;grid-template-columns:1fr 1fr;gap:22px 34px;margin-top:8px;}
+@media(max-width:720px){.science{grid-template-columns:1fr;}}
+.science h4{font-family:var(--font-body);font-weight:600;font-size:.92rem;margin:0 0 6px;}
+.science ul{margin:0;padding-left:1.05em;}
+.science li{margin:5px 0;font-size:.9rem;color:var(--ink-soft);}
+.science li b{color:var(--ink);}
+
+/* filter bar */
+.filterbar{position:sticky;top:0;z-index:20;background:var(--paper);padding:14px 0 12px;margin-top:14px;border-bottom:1px solid var(--line);}
+.filter-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:12px;}
+.filter-head h2{font-size:clamp(1.5rem,3.4vw,2.1rem);}
+.filter-head .count{font-family:var(--font-body);font-weight:600;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--sage);}
+.search{flex:1;min-width:180px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:30px;padding:7px 15px;background:var(--white);}
+.search input{border:0;outline:0;background:transparent;font-family:var(--font-body);font-size:.92rem;width:100%;color:var(--ink);}
+.search svg{width:16px;height:16px;color:var(--ink-faint);flex:none;}
+.fbtn{font-family:var(--font-body);font-weight:600;font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);background:var(--white);color:var(--ink-soft);border-radius:30px;padding:7px 14px;cursor:pointer;}
+.fbtn:hover{border-color:var(--sage);color:var(--ink);}
+.fbtn.active{background:var(--sage);color:#fff;border-color:var(--sage);}
+.filter-groups{display:none;gap:16px;flex-direction:column;padding:6px 0 4px;}
+.filter-groups.show{display:flex;}
+.fgroup{}
+.fgroup h5{font-family:var(--font-body);font-weight:600;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 8px;display:flex;align-items:center;gap:10px;}
+.fgroup h5 .mini{font-weight:500;letter-spacing:.04em;text-transform:none;color:var(--sage);cursor:pointer;font-size:.72rem;border-bottom:1px dotted var(--line);}
+.chips{display:flex;flex-wrap:wrap;gap:7px;}
+.chip{font-size:.78rem;border:1px solid var(--line);background:var(--white);color:var(--ink-soft);border-radius:30px;padding:5px 12px;cursor:pointer;user-select:none;transition:.12s;white-space:nowrap;}
+.chip:hover{border-color:var(--sage);}
+.chip.on{background:var(--sage);color:#fff;border-color:var(--sage);}
+.chip.tag.on{background:var(--berry);border-color:var(--berry);}
+.chip .x{opacity:.6;margin-left:5px;}
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.andor{display:inline-flex;border:1px solid var(--line);border-radius:30px;overflow:hidden;}
+.andor button{border:0;background:var(--white);color:var(--ink-soft);font-family:var(--font-body);font-weight:600;font-size:.72rem;letter-spacing:.08em;padding:6px 12px;cursor:pointer;}
+.andor button.on{background:var(--ink);color:#fff;}
+.active-row{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:4px;}
+.active-row .lab{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;}
+
+/* recipe grid */
+.results{padding:22px 0 10px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px;}
+.empty{text-align:center;color:var(--ink-faint);padding:50px 0;font-family:var(--font-display);font-style:italic;font-size:1.2rem;}
+
+.card{position:relative;background:var(--white);border:1px solid var(--line);border-radius:5px;padding:24px 24px 20px;overflow:hidden;display:flex;flex-direction:column;}
+.card::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:var(--accent,var(--sage));}
+.cat-protein{--accent:#6E7F69;} .cat-fruit{--accent:#9C4E63;} .cat-soda{--accent:#B07A3C;} .cat-classic{--accent:#7C6A53;} .cat-custard{--accent:#B59A4D;}
+.card-head{display:flex;gap:15px;align-items:flex-start;}
+.card-ic{flex:none;width:52px;height:52px;border:1px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--accent);background:var(--paper);}
+.card-ic svg{width:28px;height:28px;}
+.card-tag{font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;font-weight:600;color:var(--accent);}
+.card-titles h3{font-size:1.32rem;line-height:1.1;margin:4px 0 2px;}
+.card-no{font-family:var(--font-display);font-style:italic;color:var(--ink-faint);font-size:.92rem;}
+.card-desc{color:var(--ink-soft);font-size:.9rem;margin:8px 0 0;}
+.macros{display:flex;flex-wrap:wrap;margin:16px 0 0;border:1px solid var(--line);border-radius:3px;overflow:hidden;}
+.macro{flex:1 1 0;min-width:88px;padding:11px 12px;border-left:1px solid var(--line-soft);}
+.macro:first-child{border-left:0;}
+.macro.hero{background:var(--paper-2);}
+.macro .v{font-family:var(--font-display);font-size:1.5rem;line-height:1;color:var(--ink);}
+.macro .v small{font-size:.85rem;color:var(--ink-soft);}
+.macro .l{margin-top:5px;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);}
+.macro.prog .v{font-family:var(--font-body);font-size:.9rem;font-weight:600;color:var(--accent);line-height:1.2;}
+.indices{display:flex;flex-wrap:wrap;gap:6px 16px;margin:13px 0 0;padding:12px 0 0;border-top:1px solid var(--line-soft);}
+.idx{display:flex;align-items:center;gap:6px;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--ink-faint);white-space:nowrap;}
+.idx .dots{font-size:.74rem;letter-spacing:1.5px;}
+.idx .dots .on{color:var(--accent,var(--sage));} .idx .dots .off{color:var(--line);}
+.idx.spin .dots .on{color:#8a8475;} .idx.lax .dots .on{color:var(--amber);} .idx.caf .dots .on{color:#a85b3c;}
+.block-h{font-family:var(--font-body);font-weight:600;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--sage);margin:18px 0 9px;padding-bottom:6px;border-bottom:1px solid var(--line);}
+.ingredients{list-style:none;margin:0;padding:0;}
+.ingredients li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:.88rem;border-bottom:1px dotted var(--line-soft);}
+.ingredients li .q{color:var(--ink-faint);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.ingredients li.opt .nm::after{content:" · optional";color:var(--ink-faint);font-style:italic;font-size:.8em;}
+.ingredients li.miss{opacity:.5;}
+.ingredients li.miss .nm::before{content:"✗ ";color:var(--berry);}
+.method{counter-reset:m;list-style:none;margin:0;padding:0;}
+.method li{position:relative;padding:0 0 11px 30px;font-size:.88rem;}
+.method li::before{counter-increment:m;content:counter(m);position:absolute;left:0;top:-1px;width:21px;height:21px;border-radius:50%;border:1px solid var(--accent);color:var(--accent);font-family:var(--font-display);font-size:.78rem;display:flex;align-items:center;justify-content:center;}
+.tip{margin-top:15px;display:flex;gap:10px;align-items:flex-start;background:var(--paper-2);border-radius:3px;padding:11px 13px;font-size:.84rem;color:var(--ink-soft);}
+.tip .ic{width:16px;height:16px;color:var(--accent);flex:none;margin-top:2px;}
+.tip b{color:var(--ink);}
+.card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:15px;padding-top:13px;border-top:1px solid var(--line-soft);}
+.tg{font-size:.66rem;letter-spacing:.04em;color:var(--ink-faint);background:var(--paper-2);border-radius:20px;padding:3px 9px;cursor:pointer;}
+.tg:hover{color:var(--ink);background:var(--line-soft);}
+.card-spacer{flex:1;}
+
+footer{margin-top:50px;border-top:1px solid var(--line);padding:34px 0 60px;color:var(--ink-faint);font-size:.84rem;}
+footer h4{font-family:var(--font-body);font-weight:600;letter-spacing:.16em;text-transform:uppercase;font-size:.72rem;color:var(--sage);margin-bottom:10px;}
+footer p{max-width:80ch;margin:0 0 9px;}
+
+@media print{
+  @page{size:A4;margin:13mm;} body::before{display:none;} body{background:#fff;}
+  .filterbar,.guide details:not([open]){display:none;}
+  .grid{display:block;} .card{page-break-inside:avoid;break-inside:avoid;margin-bottom:8mm;}
+  .card::before,.macro.hero,.tip,.idx .dots .on{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+</style>
+</head>
+<body>
+
+<!-- ICON SPRITE -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs></defs>
+  <symbol id="ic-choc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="5" y="4" width="14" height="16" rx="1.2"/><path d="M5 9h14M5 14.5h14M12 4v16M8.5 4v16M15.5 4v16" stroke-width="1.1"/></symbol>
+  <symbol id="ic-vanilla" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="2.4"/><path d="M12 6.6C12 4 13.6 3 15 3.4M12 6.6C12 4 10.4 3 9 3.4M14.4 9c2.3-.7 3.6.5 3.8 2M9.6 9c-2.3-.7-3.6.5-3.8 2M11 11.1 8.6 20M13 11.1 15.4 20"/></symbol>
+  <symbol id="ic-almond" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c4 3.4 5.5 7.4 5.5 10.4 0 4-2.6 6.6-5.5 6.6s-5.5-2.6-5.5-6.6C6.5 10.4 8 6.4 12 3Z"/><path d="M12 7.5v9M9.4 10.5l2.6 2 2.6-2" stroke-width="1.1"/></symbol>
+  <symbol id="ic-banana" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7c.4 6 4.2 11 11 11 1.7 0 2.6-.4 2.9-1.1.2-.6-.2-1-1-1.1-4.8-.6-8.7-4.2-9.4-9-.1-.9-.5-1.3-1.2-1.3S5 6 5 7Z"/><path d="M5 7 4 5.4M18.9 16.8l1.3.2" stroke-width="1.2"/></symbol>
+  <symbol id="ic-oreo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.2"/><circle cx="12" cy="12" r="4.4"/><path d="M12 3.9v2M12 18.1v2M3.9 12h2M18.1 12h2M6.3 6.3l1.5 1.5M16.2 16.2l1.5 1.5M17.7 6.3l-1.5 1.5M7.8 16.2l-1.5 1.5" stroke-width="1"/></symbol>
+  <symbol id="ic-strac" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6.5C16.5 5 13 6.4 11 8.4 9 10.4 8.6 13.4 10.6 14.4c1.7.9 3-.4 2.2-1.8-.7-1.2-2.6-.7-3.8.6C7.4 15 6.6 17.6 8 19.5"/><path d="M16 9.5l1.4-2M18.5 12l2-.6M14 13.5l.5 2.2" stroke-width="1.2"/></symbol>
+  <symbol id="ic-peanut" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3.5c-2.4 0-3.7 2-3.7 3.9 0 1.4.8 2.3.8 3.6 0 1.3-.8 2.2-.8 3.7C5.3 19 8.2 21 12 21s6.7-2 6.7-5.3c0-1.5-.8-2.4-.8-3.7 0-1.3.8-2.2.8-3.6 0-1.9-1.3-3.9-3.7-3.9-1.6 0-2.3.9-3 1.6-.7-.7-1.4-1.6-3-1.6Z"/><path d="M9.5 8.2h.01M14.5 8.2h.01M9.5 12h.01M14.5 12h.01M12 14.4h.01" stroke-width="1.6"/></symbol>
+  <symbol id="ic-froyo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11h10l-1 8.4a1.3 1.3 0 0 1-1.3 1.1H9.3A1.3 1.3 0 0 1 8 19.4L7 11Z"/><path d="M8 11c0-2 1.6-3 2.4-3 .2-1.6 1.6-2.4 2.6-2 1-1.2 3-.8 3.4.8 1.6.2 2.2 2 1 3"/></symbol>
+  <symbol id="ic-strawberry" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-3.3 0-6.5-3.2-6.5-7.3 0-2.4 2.9-4.2 6.5-4.2s6.5 1.8 6.5 4.2C18.5 17.8 15.3 21 12 21Z"/><path d="M12 9.5V6.5M12 6.5c-1.4-1.6-3.2-1.5-4.4-1 .9 1.3 2.6 1.8 4.4 1Zm0 0c1.4-1.6 3.2-1.5 4.4-1-.9 1.3-2.6 1.8-4.4 1Z"/><path d="M9.5 13h.01M14.5 13h.01M12 15.5h.01" stroke-width="1.6"/></symbol>
+  <symbol id="ic-mango" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.2C10 4 5.5 7 5 11.5c-.5 4.3 2.6 8 6.7 8.4 3.9.4 6.8-2.2 7.2-5.6.5-4.2-1.6-7.9-4.4-9.1Z"/><path d="M14.5 5.2c.8-1.4 2.4-2 3.8-1.7-.2 1.5-1.3 2.6-2.7 3" stroke-width="1.3"/></symbol>
+  <symbol id="ic-cola" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 6h10l-1.1 13.2a1.4 1.4 0 0 1-1.4 1.3H9.5a1.4 1.4 0 0 1-1.4-1.3L7 6Z"/><path d="M6.6 6h10.8M14 4l2.5 2.5" stroke-width="1.2"/><path d="M10 10.5h.01M13 12h.01M11 14h.01" stroke-width="1.5"/></symbol>
+  <symbol id="ic-lemon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13" rx="7.5" ry="5.6" transform="rotate(-22 12 13)"/><path d="M17.5 6.4c1-1.4 2.7-1.9 4.1-1.6-.3 1.5-1.4 2.7-2.8 3"/><path d="M8.2 11.2 15 15.6M15.4 10.2 8.6 14.6" stroke-width="1"/></symbol>
+  <symbol id="ic-lime" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10l-1 12.3a1.3 1.3 0 0 1-1.3 1.2H9.3A1.3 1.3 0 0 1 8 19.3L7 7Z"/><path d="M6.7 7h10.6"/><path d="M14.5 4.2a3.3 3.3 0 1 0 3.3 3.3M14.5 4.2v3.3h3.3" stroke-width="1.1"/></symbol>
+  <symbol id="ic-cherry" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="16.5" r="3.5"/><circle cx="16" cy="15" r="3.5"/><path d="M7.5 13C8 8 11 4.5 15.5 4 M16 11.5C15.6 8 16.4 5.4 18.5 4.2 M15.5 4c1.2-.4 2.4-.2 3 .2"/></symbol>
+  <symbol id="ic-mint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20c0-5 3.8-7.5 7-7.7-.2 4.2-3 7.4-7 7.7Z"/><path d="M12 20c0-5-3.8-7.5-7-7.7.2 4.2 3 7.4 7 7.7Z"/><path d="M12 20V8.5M12 8.5c0-2.5 1.8-4.4 4-4.7M12 8.5c0-2.5-1.8-4.4-4-4.7"/></symbol>
+  <symbol id="ic-berry" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.6" cy="14.4" r="3.4"/><circle cx="15.4" cy="14.4" r="3.4"/><circle cx="12" cy="9.4" r="3.4"/><path d="M12 6.2c0-2 1.6-3.1 3.2-3.2"/></symbol>
+  <symbol id="ic-melon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5h17l-7.7 12.2a1.4 1.4 0 0 1-2.6 0L3.5 7.5Z"/><path d="M3.5 7.5c5.3 3 11.7 3 17 0"/><path d="M9.5 11.5h.02M12 13.5h.02M11 16.5h.02" stroke-width="1.7"/></symbol>
+  <symbol id="ic-pineapple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="14.5" rx="5.2" ry="6.5"/><path d="M7.6 11.5 16 17.5M16.4 11.5 8 17.5" stroke-width=".9"/><path d="M12 8c-1.1-2.1-3.2-2.6-4.8-2 .4 1.8 1.9 2.9 3.2 3.1M12 8c1.1-2.1 3.2-2.6 4.8-2-.4 1.8-1.9 2.9-3.2 3.1M12 8V5.2"/></symbol>
+  <symbol id="ic-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3 6.5 13.2H11l-1.2 7.8 7.7-11.2H12.4L13.5 3Z"/></symbol>
+  <symbol id="ic-glass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 5.5h10l-1.1 13.7a1.4 1.4 0 0 1-1.4 1.3H9.5a1.4 1.4 0 0 1-1.4-1.3L7 5.5Z"/><path d="M6.6 5.5h10.8M7.7 11.5h8.6" /></symbol>
+  <symbol id="ic-scoop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="5.5"/><path d="M7 11.5 12 21l5-9.5"/></symbol>
+  <symbol id="ic-egg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3.5 4 5 7.5 5 10.5a5 5 0 0 1-10 0C7 10.5 8.5 7 12 3Z"/><circle cx="12" cy="13.5" r="2.6"/></symbol>
+  <symbol id="ic-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="7.5"/><path d="M12 5.5c-1-1.5-.5-3 1-3.5M12 13l5.3-5.3M12 13l-5.3 5.3M12 13l5.3 5.3M12 13l-5.3-5.3" stroke-width="1"/></symbol>
+  <symbol id="ic-honey" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8M9 3l-2 5v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V8l-2-5"/><path d="M7 9h10M12 13v5" stroke-width="1.1"/></symbol>
+  <symbol id="ic-date" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12.5" rx="4" ry="7"/><path d="M12 5.5c1.5-2.5 4-3 6-2.5M12 5.5c-1.5-2.5-4-3-6-2.5" stroke-width="1.2"/></symbol>
+  <!-- utility -->
+  <symbol id="u-snow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M4.2 6.5l15.6 9M19.8 6.5l-15.6 9M12 5.5 9.5 8M12 5.5 14.5 8M12 18.5 9.5 16M12 18.5 14.5 16"/></symbol>
+  <symbol id="u-drop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3.5 4.4 6 7.6 6 10.6A6 6 0 0 1 6 13.6C6 10.6 8.5 7.4 12 3Z"/></symbol>
+  <symbol id="u-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></symbol>
+  <symbol id="u-leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19C4 11 9 5 19 5c1 8-4 14-14 14Z"/><path d="M5 19C8 14 11 11 16 9"/></symbol>
+  <symbol id="u-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></symbol>
+  <symbol id="u-fire" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3 4 4 4 8a4 4 0 0 1-8 0c0-1 .4-2 1-2.5C9 11 12 8 12 3Z"/></symbol>
+  <symbol id="u-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="u-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5Z"/><path d="M4 19a2 2 0 0 1 2-2h13"/></symbol>
+  <symbol id="u-cart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.4 12.3a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.8L20 8H6"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">Hjemmelaget &middot; Database</div>
+    <div class="logo">FRO<span class="dot">S</span>T</div>
+    <p class="tagline">A filterable recipe database for the frozen-then-churned ice cream machine.</p>
+    <p class="machine-line">Gladkokken 12-in-1 Ismaskin &middot; FROST high-protein recipes + the official Gladkokken set</p>
+  </header>
+
+  <!-- COLLAPSIBLE GUIDE -->
+  <section class="guide">
+    <details class="acc" id="acc-how">
+      <summary><svg class="sic"><use href="#u-book"/></svg>How your machine works <small>read me first</small><span class="chev">▸</span></summary>
+      <div class="acc-body">
+        <p class="lead">Not a churn-as-it-freezes machine: you freeze a liquid base <em>rock solid</em> for ~24 h, then the blade shaves it into silky ice cream. Get the base chemistry right and it's luxurious; wrong and it's an ice cube.</p>
+        <div class="steps">
+          <div class="step"><div class="n">1</div><h4>Blend</h4><p>Whisk/blend everything smooth — no lumps.</p></div>
+          <div class="step"><div class="n">2</div><h4>Fill to line</h4><p>500 ml tub, stop at MAX. Overfilling jams the blade.</p></div>
+          <div class="step"><div class="n">3</div><h4>Freeze flat 24 h</h4><p>Dead level, lid on, until solid to a tap.</p></div>
+          <div class="step"><div class="n">4</div><h4>Process</h4><p>Pick the program each recipe names.</p></div>
+          <div class="step"><div class="n">5</div><h4>Re-spin</h4><p>Powdery? Add 1–2 tbsp liquid, run Re-spin.</p></div>
+          <div class="step"><div class="n">6</div><h4>Mix-in &amp; serve</h4><p>Chunks via the centre hole on Mix-in.</p></div>
+        </div>
+        <p style="margin-top:6px;"><b>Protect your tubs:</b> never mash or scrape inside the tub — prep in a bowl, pour the base in, and serve with plastic/silicone, not metal.</p>
+      </div>
+    </details>
+    <details class="acc" id="acc-science">
+      <summary><svg class="sic"><use href="#u-snow"/></svg>The food science <small>creaminess &amp; beating iciness</small><span class="chev">▸</span></summary>
+      <div class="acc-body">
+        <div class="science">
+          <div><h4>Four levers of creaminess</h4><ul>
+            <li><b>Fat</b> coats ice crystals (cream, marzipan, PB, coconut, oat cream).</li>
+            <li><b>Protein</b> traps water &amp; air — flavour and body.</li>
+            <li><b>Sugar/allulose</b> lower the freezing point → scoopable.</li>
+            <li><b>Stabiliser</b> (xanthan, 0.1–0.5% of mix) holds it together.</li>
+          </ul></div>
+          <div><h4>Beat the iciness (sugar-free)</h4><ul>
+            <li><b>Allulose</b> is the main softener — keeps it scoopable, no grit. ~2 tbsp/pot, never more or it won't freeze hard enough to churn.</li>
+            <li><b>Sukrin Melis (erythritol)</b> crystallises gritty above ~8%; we keep it low.</li>
+            <li><b>Watery fruit/soda</b> = ice: cook compotes down or accept sorbet/slush by design.</li>
+            <li><b>Taste the base before freezing</b> — aim slightly too sweet.</li>
+          </ul></div>
+        </div>
+      </div>
+    </details>
+    <details class="acc" id="acc-shop">
+      <summary><svg class="sic"><use href="#u-cart"/></svg>Pantry &amp; shopping <small>ordered ✓ + supermarket list</small><span class="chev">▸</span></summary>
+      <div class="acc-body" id="shop-body">
+        <p class="lead"><b>Ordered from iHerb ✓:</b> Allulose, Xanthan, Cocoa powder, Cacao nibs, PB2 peanut + almond butter, Coconut milk powder, Coconut oil.</p>
+        <p><b>Already have:</b> Self vegan protein (choc + vanilla), Oatly Oat 1.5%, Alpro Almond Nutty, Sukrin Melis, Sukrin Marzipan.</p>
+        <p><b>From the supermarket:</b> vanilla extract/paste (Dr. Oetker / Taylor &amp; Colledge), peppermint extract, flaky sea salt, natural peanut butter; banana, strawberries, mixed berries, mango, pineapple, watermelon, cherries, lime &amp; lemon; Cola/Sprite Zero, Fanta Crimson Cherry, sugar-free saft &amp; energy drink, Oreos. <em>For the classic Gladkokken recipes:</em> cream (fløte), whole milk, eggs, sugar, honey, Greek/natural yoghurt, chia, oat cream (Oatly iMat 13%), Oatly Barista, dates, agave syrup, light syrup.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- FILTER BAR -->
+  <section class="filterbar">
+    <div class="filter-head">
+      <h2>Recipes</h2>
+      <span class="count" id="count">—</span>
+      <div class="search"><svg><use href="#u-search"/></svg><input id="q" type="search" placeholder="Search recipes or ingredients…" autocomplete="off" /></div>
+      <button class="fbtn" id="toggleFilters">Filters</button>
+      <button class="fbtn" id="resetBtn">Reset</button>
+    </div>
+    <div class="filter-groups" id="filterGroups">
+      <div class="fgroup">
+        <h5>I have these ingredients <span class="mini" id="tickHave">tick what I have/ordered</span> · <span class="mini" id="clearHave">clear</span></h5>
+        <div class="chips" id="ingChips"></div>
+      </div>
+      <div class="fgroup">
+        <h5>Tags &amp; categories <span class="toolbar" style="display:inline-flex"><span class="andor"><button id="orBtn" class="on">Any</button><button id="andBtn">All</button></span></span></h5>
+        <div class="chips" id="tagChips"></div>
+      </div>
+    </div>
+    <div class="active-row" id="activeRow"></div>
+  </section>
+
+  <section class="results">
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" style="display:none">No recipes match — loosen the filters.</div>
+  </section>
+
+  <footer>
+    <h4>Notes</h4>
+    <p><b>Calories &amp; macros</b> are per whole 500 ml pot — honest estimates from product labels and standard food data, not lab values. The classic Gladkokken recipes use real sugar/cream/egg (higher calorie, lower protein); the FROST recipes are sugar-free/high-protein.</p>
+    <p><b>Indices</b> (filled = more): Protein, Creamy, Sweet, Re-spin (churning needed), Laxative (sugar-alcohol load for the whole pot at once) + Caffeine where relevant. <b>"What can I make"</b> hides recipes needing an ingredient you haven't ticked (water, salt &amp; lemon are assumed on hand).</p>
+    <p style="color:var(--ink-faint);font-size:.8rem;">FROST — Gladkokken 12-in-1. Classic recipes adapted from the official Gladkokken oppskrifter booklet.</p>
+  </footer>
+</div>
+
+<script>
+/* ============================ DATA ============================ */
+/* Canonical ingredients: key -> {n:name, g:group}. Order within group = display order. */
+var ING = {
+  /* Sweeteners */
+  allulose:{n:'Allulose',g:'Sweeteners'}, sukrin:{n:'Sukrin Melis',g:'Sweeteners'}, 'sukrin-marzipan':{n:'Sukrin Marzipan',g:'Sweeteners'},
+  sugar:{n:'Sugar',g:'Sweeteners'}, honey:{n:'Honey',g:'Sweeteners'}, agave:{n:'Agave syrup',g:'Sweeteners'}, 'light-syrup':{n:'Light syrup (lys sirup)',g:'Sweeteners'}, dates:{n:'Dates',g:'Sweeteners'},
+  /* Milks & liquids */
+  oatly:{n:'Oatly Oat 1.5%',g:'Milks & liquids'}, alpro:{n:'Alpro Almond Nutty',g:'Milks & liquids'}, 'oat-cream':{n:'Oat cream (Oatly iMat 13%)',g:'Milks & liquids'}, 'oatly-barista':{n:'Oatly Barista',g:'Milks & liquids'},
+  cream:{n:'Cream (fløte)',g:'Milks & liquids'}, milk:{n:'Whole milk',g:'Milks & liquids'}, 'coconut-cream':{n:'Coconut cream/milk',g:'Milks & liquids'}, water:{n:'Water',g:'Milks & liquids'},
+  /* Protein & dairy */
+  'self-choc':{n:'Self chocolate protein',g:'Protein & dairy'}, 'self-van':{n:'Self vanilla protein',g:'Protein & dairy'}, 'greek-yoghurt':{n:'Greek yoghurt',g:'Protein & dairy'}, 'natural-yoghurt':{n:'Natural yoghurt',g:'Protein & dairy'}, 'egg-yolk':{n:'Egg yolks',g:'Protein & dairy'}, icecream:{n:'Ice cream (any)',g:'Protein & dairy'},
+  /* Fruit */
+  banana:{n:'Banana',g:'Fruit'}, 'frozen-berries':{n:'Frozen mixed berries',g:'Fruit'}, strawberry:{n:'Strawberries',g:'Fruit'}, blueberry:{n:'Blueberries',g:'Fruit'}, raspberry:{n:'Raspberries',g:'Fruit'}, blackberry:{n:'Blackberries',g:'Fruit'}, mango:{n:'Mango',g:'Fruit'}, pineapple:{n:'Pineapple',g:'Fruit'}, watermelon:{n:'Watermelon',g:'Fruit'}, kiwi:{n:'Kiwi',g:'Fruit'}, cherry:{n:'Cherries',g:'Fruit'}, orange:{n:'Orange',g:'Fruit'}, lemon:{n:'Lemon',g:'Fruit'}, lime:{n:'Lime',g:'Fruit'}, 'pineapple-juice':{n:'Pineapple juice',g:'Fruit'}, 'orange-juice':{n:'Orange juice',g:'Fruit'},
+  /* Flavour & add-ons */
+  cocoa:{n:'Cocoa powder',g:'Flavour & add-ons'}, 'cacao-nibs':{n:'Cacao nibs',g:'Flavour & add-ons'}, 'dark-choc':{n:'Dark chocolate',g:'Flavour & add-ons'}, 'peanut-butter':{n:'Peanut butter',g:'Flavour & add-ons'}, pb2:{n:'PB2 powder',g:'Flavour & add-ons'}, 'almond-butter':{n:'PB2 almond butter',g:'Flavour & add-ons'}, oreos:{n:'Oreos',g:'Flavour & add-ons'}, 'freeze-dried-rasp':{n:'Freeze-dried raspberry',g:'Flavour & add-ons'}, chia:{n:'Chia seeds',g:'Flavour & add-ons'}, pecans:{n:'Pecans',g:'Flavour & add-ons'},
+  /* Extracts & pantry */
+  'vanilla-ext':{n:'Vanilla extract/paste',g:'Extracts & pantry'}, 'almond-ext':{n:'Almond extract',g:'Extracts & pantry'}, 'peppermint-ext':{n:'Peppermint extract',g:'Extracts & pantry'}, xanthan:{n:'Xanthan gum',g:'Extracts & pantry'}, salt:{n:'Salt',g:'Extracts & pantry'}, cinnamon:{n:'Cinnamon',g:'Extracts & pantry'}, rum:{n:'White rum',g:'Extracts & pantry'},
+  /* Drinks */
+  'cola-zero':{n:'Cola Zero',g:'Drinks'}, 'sprite-zero':{n:'Sprite Zero',g:'Drinks'}, fanta:{n:'Fanta Crimson Cherry',g:'Drinks'}, 'sugarfree-saft':{n:'Sugar-free saft',g:'Drinks'}, 'energy-drink':{n:'Sugar-free energy drink',g:'Drinks'}, sprite:{n:'Sprite',g:'Drinks'}
+};
+/* ingredients always assumed on-hand for "what can I make" */
+var BASICS = {water:1, salt:1, lemon:1, lime:1, cinnamon:1};
+/* what the user owns/ordered (pre-tick set) */
+var OWNED = ['allulose','sukrin','sukrin-marzipan','oatly','alpro','coconut-cream','self-choc','self-van','cocoa','cacao-nibs','dark-choc','peanut-butter','pb2','almond-butter','oreos','freeze-dried-rasp','vanilla-ext','almond-ext','peppermint-ext','xanthan','salt','banana','strawberry','frozen-berries','mango','pineapple','watermelon','cherry','lemon','lime','cola-zero','sprite-zero','fanta','sugarfree-saft','energy-drink','water'];
+
+/* Tags: key -> {l:label, g:group} */
+var TAGS = {
+  frost:{l:'FROST (protein)',g:'Style'}, classic:{l:'Gladkokken classic',g:'Style'}, neu:{l:'New ingredients',g:'Style'},
+  'high-protein':{l:'High protein',g:'Diet'}, 'low-cal':{l:'Low calorie',g:'Diet'}, 'very-low-cal':{l:'Very low calorie',g:'Diet'}, 'sugar-free':{l:'Sugar-free',g:'Diet'}, vegan:{l:'Vegan',g:'Diet'}, dairy:{l:'Contains dairy',g:'Diet'}, egg:{l:'Contains egg',g:'Diet'},
+  chocolate:{l:'Chocolate',g:'Flavour'}, vanilla:{l:'Vanilla',g:'Flavour'}, berry:{l:'Berry',g:'Flavour'}, citrus:{l:'Citrus',g:'Flavour'}, tropical:{l:'Tropical',g:'Flavour'}, nutty:{l:'Nutty',g:'Flavour'}, coffeefree:{l:'Caffeine-free',g:'Flavour'}, caffeine:{l:'Has caffeine',g:'Flavour'},
+  nocook:{l:'No-cook',g:'Effort'}, cook:{l:'Stovetop step',g:'Effort'}, quick:{l:'Quick (no 24h freeze)',g:'Effort'}, kid:{l:'Kid-friendly',g:'Effort'},
+  creamy:{l:'Creamy',g:'Texture'}, icy:{l:'Icy / sorbet',g:'Texture'}
+};
+
+/* Recipes. ing entries: [key,'display', opt?]. idx:[creamy,sweet,lax,caf,respin,protein] */
+var RECIPES = [
+{no:1,name:'Double Chocolate Protein Gelato',cat:'cat-protein',catL:'Protein ice cream',program:'Gelato + Re-spin',icon:'ic-choc',kcal:420,protein:54,per100:84,idx:[3,3,3,1,4,5],
+ desc:'Dark, dense and fudgy — the workhorse. Two scoops of chocolate protein plus real cocoa, no sugar in sight.',
+ ing:[['oatly','330 ml'],['self-choc','60 g (2 scoops)'],['cocoa','15 g (2 tbsp)'],['allulose','24 g (2 tbsp)'],['sukrin','8 g (2 tsp), to taste'],['xanthan','1.2 g (½ tsp)'],['salt','pinch',1]],
+ method:['Blend everything until completely smooth and the cocoa is fully dissolved.','Pour into the tub to the MAX line, freeze flat 24 h.','Process on Gelato — it looks powdery at first, that’s normal.','Add 1–2 tbsp oat drink, run Re-spin until glossy.'],
+ tip:['u-spark','Stracciatella: after the first spin add 15 g shaved dark chocolate, run Mix-in.'],
+ tags:['frost','high-protein','sugar-free','vegan','chocolate','nocook','caffeine','creamy']},
+
+{no:2,name:'Vanilla Bean Protein Ice Cream',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Re-spin',icon:'ic-vanilla',kcal:330,protein:39,per100:66,idx:[3,3,3,0,3,4],
+ desc:'The blank canvas every other flavour builds on. Real vanilla makes it taste like proper dairy vanilla.',
+ ing:[['oatly','330 ml'],['self-van','45 g (1½ scoops)'],['vanilla-ext','10 ml (2 tsp)'],['allulose','24 g (2 tbsp)'],['sukrin','4 g (1 tsp), to taste'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend smooth — with bean paste you’ll see flecks.','Tub to MAX, freeze flat 24 h.','Process on Ice Cream.','Splash in oat drink and Re-spin to silky.'],
+ tip:['u-drop','Use real extract or paste — “vaniljesukker” won’t give this taste.'],
+ tags:['frost','high-protein','sugar-free','vegan','vanilla','nocook','coffeefree','creamy','kid']},
+
+{no:3,name:'Marzipan–Almond Dream',cat:'cat-protein',catL:'Protein ice cream',program:'Gelato + Re-spin',icon:'ic-almond',kcal:325,protein:32,per100:65,idx:[4,4,3,0,2,3],
+ desc:'Sukrin Marzipan melted into almond drink — the most luxurious, fudge-soft pot here; the almond fat does the work.',
+ ing:[['alpro','300 ml'],['sukrin-marzipan','50 g, grated'],['self-van','30 g (1 scoop)'],['almond-ext','¼ tsp',1],['allulose','12 g (1 tbsp)'],['sukrin','to taste',1],['xanthan','0.6 g (¼ tsp)']],
+ method:['Warm the almond drink, whisk in grated marzipan until dissolved, cool.','Blend in protein, allulose, xanthan and sweetener to taste.','Tub, freeze flat 24 h.','Process on Gelato, Re-spin with a splash of almond drink.'],
+ tip:['u-spark','Whisk in 1 tbsp PB2 almond butter for an even deeper almond hit.'],
+ tags:['frost','high-protein','sugar-free','vegan','nutty','nocook','coffeefree','creamy']},
+
+{no:4,name:'Banana Protein Nice-Cream',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Re-spin',icon:'ic-banana',kcal:315,protein:27,per100:63,idx:[4,3,1,0,1,3],
+ desc:'The easiest creamy win. Banana is nature’s stabiliser — freezes soft and scoopable on its own, no allulose needed.',
+ ing:[['banana','120 g (1 medium)'],['oatly','200 ml'],['self-van','30 g (1 scoop)'],['vanilla-ext','½ tsp',1],['sukrin','to taste',1]],
+ method:['Blend the banana with everything else until completely smooth.','Tub, freeze flat 24 h.','Process on Ice Cream — banana bases churn beautifully first time.','Re-spin only if needed.'],
+ tip:['u-spark','Banana split: Mix-in chopped dark chocolate + a swirl of peanut butter (+ ~150 kcal).'],
+ tags:['frost','high-protein','sugar-free','vegan','nocook','coffeefree','creamy','kid']},
+
+{no:5,name:'Cookies & Cream',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Mix-in',icon:'ic-oreo',kcal:535,protein:41,per100:107,idx:[3,4,3,0,3,4],
+ desc:'Vanilla protein base, then Oreos crushed through on Mix-in so you get whole rubble, not mush. The crowd-pleaser.',
+ ing:[['oatly','330 ml'],['self-van','45 g (1½ scoops)'],['vanilla-ext','5 ml (1 tsp)'],['allulose','18 g (1½ tbsp)'],['sukrin','4 g (1 tsp), to taste'],['xanthan','0.6 g (¼ tsp)'],['oreos','44 g (4 cookies)']],
+ method:['Blend the base (everything except Oreos) smooth. Tub, freeze flat 24 h.','Process on Ice Cream, Re-spin with a splash of oat drink.','Bore a hole, drop in broken Oreos, run Mix-in once.','Don’t over-mix — keep visible cookie pieces.'],
+ tip:['u-snow','Lighter: 3 Oreos + Alpro almond instead of oat → ~470 kcal.'],
+ tags:['frost','high-protein','vanilla','chocolate','nocook','creamy','kid']},
+
+{no:6,name:'Stracciatella Protein Gelato',cat:'cat-protein',catL:'Protein ice cream',program:'Gelato + Mix-in',icon:'ic-strac',kcal:430,protein:41,per100:86,idx:[3,3,3,1,3,4],
+ desc:'Clean vanilla gelato shattered with fine dark-chocolate shards. No coffee — milk, vanilla and chocolate, Italian way.',
+ ing:[['oatly','330 ml'],['self-van','45 g (1½ scoops)'],['vanilla-ext','5 ml (1 tsp)'],['allulose','24 g (2 tbsp)'],['sukrin','4 g (1 tsp), to taste'],['xanthan','0.6 g (¼ tsp)'],['dark-choc','20 g (85%)']],
+ method:['Blend the vanilla base smooth. Tub, freeze flat 24 h.','Process on Gelato, Re-spin to silky.','Finely chop the chocolate, add via the hole, run Mix-in.'],
+ tip:['u-spark','15 g cacao nibs instead of chocolate — more crunch, fewer calories.'],
+ tags:['frost','high-protein','sugar-free','vegan','chocolate','vanilla','nocook','caffeine','creamy']},
+
+{no:7,name:'Peanut Butter Cup',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Mix-in',icon:'ic-peanut',kcal:545,protein:57,per100:109,idx:[4,3,3,1,4,5],
+ desc:'The most decadent — and at 57 g, the highest-protein pot here. Chocolate base, real peanut butter, dark-chocolate rubble.',
+ ing:[['oatly','300 ml'],['self-choc','60 g (2 scoops)'],['peanut-butter','16 g (1 tbsp)'],['allulose','24 g (2 tbsp)'],['sukrin','8 g (2 tsp), to taste'],['xanthan','0.6 g (¼ tsp)'],['dark-choc','15 g']],
+ method:['Blend everything except the mix-in chocolate — the peanut butter melts in.','Tub, freeze flat 24 h.','Process on Ice Cream, Re-spin with a splash of oat drink.','Add chopped chocolate through the hole, run Mix-in.'],
+ tip:['u-snow','Cut ~110 kcal: swap PB for 2 tbsp PB2 powder.'],
+ tags:['frost','high-protein','chocolate','nutty','nocook','caffeine','creamy']},
+
+{no:8,name:'Frozen Berry Protein Froyo',cat:'cat-fruit',catL:'Frozen yoghurt',program:'Frozen Yoghurt + Re-spin',icon:'ic-froyo',kcal:290,protein:40,per100:58,idx:[2,3,3,0,3,4],
+ desc:'Tangy, pink and light — 40 g protein for under 300 kcal. Frozen berries lock up the water so it stays smooth.',
+ ing:[['frozen-berries','150 g'],['alpro','250 ml'],['self-van','45 g (1½ scoops)'],['allulose','24 g (2 tbsp)'],['sukrin','12 g (1 tbsp), to taste'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Thaw the berries a little, blend everything smooth.','Tub to MAX, freeze flat 24 h.','Process on Frozen Yoghurt (or Sorbet).','Re-spin with a splash of almond drink until creamy.'],
+ tip:['u-spark','Use oat instead of almond for a richer froyo (+ ~75 kcal).'],
+ tags:['frost','high-protein','low-cal','sugar-free','vegan','berry','nocook','coffeefree']},
+
+{no:9,name:'Fresh Berry & Vanilla Swirl',cat:'cat-fruit',catL:'Protein ice cream',program:'Ice Cream + Mix-in',icon:'ic-strawberry',kcal:375,protein:41,per100:75,idx:[3,3,3,0,3,4],
+ desc:'Vanilla protein base rippled with a quick no-sugar fresh-berry compote, boosted by freeze-dried raspberry.',
+ ing:[['oatly','300 ml'],['self-van','45 g (1½ scoops)'],['freeze-dried-rasp','10 g'],['vanilla-ext','5 ml (1 tsp)'],['allulose','24 g (2 tbsp)'],['sukrin','4 g (1 tsp), to taste'],['strawberry','100 g, for compote']],
+ method:['Compote: simmer strawberries with a little Sukrin 5 min until jammy, cool fully.','Blend oat drink, protein, berry powder, vanilla, allulose. Tub, freeze 24 h.','Process on Ice Cream, Re-spin smooth.','Spoon cold compote into the hole, Mix-in once for a ripple.'],
+ tip:['u-drop','Powder + compote = berry flavour without the water that makes ice crystals.'],
+ tags:['frost','high-protein','berry','vanilla','cook','creamy']},
+
+{no:10,name:'Mango–Coconut Sorbet',cat:'cat-fruit',catL:'Vegan sorbet',program:'Sorbet + Re-spin',icon:'ic-mango',kcal:285,protein:3,per100:57,idx:[4,4,2,0,2,1],
+ desc:'A pure-fruit holiday in a tub. Coconut cream gives it gelato-like body most sorbets miss.',
+ ing:[['mango','200 g, frozen'],['coconut-cream','80 ml'],['lime','15 ml (1 tbsp)'],['sukrin','12 g, to taste'],['xanthan','0.6 g (¼ tsp)'],['water','to MAX line',1]],
+ method:['Blend mango, coconut cream, lime, sweetener smooth, topping with water to MAX.','Tub, freeze flat 24 h.','Process on Sorbet.','Re-spin with a splash of water for a softer scoop.'],
+ tip:['u-spark','Add 1 scoop vanilla protein (+117 kcal, +24 g) for a tropical lassi ice cream.'],
+ tags:['frost','low-cal','sugar-free','vegan','tropical','nocook','coffeefree','creamy']},
+
+{no:11,name:'Cola Zero Float Sorbet',cat:'cat-soda',catL:'Soda sorbet',program:'Sorbet / Slush + Re-spin',icon:'ic-cola',kcal:25,protein:1,per100:5,idx:[1,3,1,2,2,1],
+ desc:'An entire tub of cola-float dessert for the calories of a stick of gum. A splash of oat gives the creamy “float” edge.',
+ ing:[['cola-zero','450 ml, half-flat'],['oatly','50 ml'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Stir the cola to release most of the fizz, whisk in xanthan.','Pour to MAX with headroom (soda expands). Freeze flat 24 h.','Process on Sorbet (or Slush for looser).','Re-spin once; serve immediately.'],
+ tip:['u-snow','Skip the oat for a ~2 kcal cola granita.'],
+ tags:['frost','very-low-cal','low-cal','sugar-free','vegan','nocook','caffeine','icy','kid']},
+
+{no:12,name:'Sprite Zero Lime Slush',cat:'cat-soda',catL:'Soda slush',program:'Slush + Re-spin',icon:'ic-lime',kcal:8,protein:0,per100:2,idx:[1,3,1,0,2,1],
+ desc:'Sharp, frosty, lemon-lime — the most refreshing thing you can make for essentially no calories.',
+ ing:[['sprite-zero','450 ml, half-flat'],['lime','15 ml (1 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Stir out most of the fizz, whisk in lime juice and xanthan.','Pour to MAX with headroom. Freeze flat 24 h.','Process on Slush.','Re-spin for a finer texture.'],
+ tip:['u-leaf','Mojito mood: muddle 2–3 mint leaves into the soda before freezing.'],
+ tags:['frost','very-low-cal','low-cal','sugar-free','vegan','citrus','nocook','coffeefree','icy','kid']},
+
+{no:13,name:'Fanta Crimson Cherry Sorbet',cat:'cat-soda',catL:'Soda sorbet',program:'Sorbet + Re-spin',icon:'ic-cherry',kcal:105,protein:0,per100:22,idx:[1,3,1,0,2,1],
+ desc:'Deep cherry-red and just sweet enough. The reduced-sugar Norwegian Fanta lands this low; cherries make it taste fuller.',
+ ing:[['fanta','450 ml, half-flat'],['cherry','50 g, frozen',1],['xanthan','0.6 g (¼ tsp)']],
+ method:['Stir out the fizz; blend with cherries (if using) and xanthan.','Pour to MAX with headroom. Freeze flat 24 h.','Process on Sorbet, then Re-spin.'],
+ tip:['u-snow','Check your can: figures assume ~21 kcal/100 ml. Zero-Fanta → ~5 kcal/pot; full-sugar → ~190.'],
+ tags:['frost','low-cal','citrus','berry','nocook','coffeefree','icy','kid']},
+
+{no:14,name:'Mint Choc-Chip Protein',cat:'cat-protein',catL:'Protein ice cream',program:'Gelato + Mix-in',icon:'ic-mint',kcal:425,protein:41,per100:85,idx:[3,3,3,2,3,4],
+ desc:'Cool peppermint vanilla base shot through with crunchy cacao nibs. Naturally pale — add matcha for green.',
+ ing:[['oatly','330 ml'],['self-van','45 g (1½ scoops)'],['peppermint-ext','¼ tsp (start small!)'],['allulose','24 g (2 tbsp)'],['sukrin','4 g (1 tsp), to taste'],['xanthan','0.6 g (¼ tsp)'],['cacao-nibs','15 g']],
+ method:['Blend the base — add peppermint a drop at a time, it’s strong.','Tub, freeze flat 24 h.','Process on Gelato, Re-spin silky.','Add cacao nibs through the hole, run Mix-in.'],
+ tip:['u-leaf','¼ tsp matcha or a pinch of spirulina colours it green without dye.'],
+ tags:['frost','high-protein','sugar-free','vegan','chocolate','nocook','caffeine','creamy']},
+
+{no:15,name:'Chunky Monkey',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Mix-in',icon:'ic-banana',kcal:400,protein:28,per100:80,idx:[4,3,1,2,2,3],
+ desc:'Chocolate, banana and crunchy cacao nibs — banana keeps it soft without allulose, cocoa makes it a frozen choc-banana shake.',
+ ing:[['banana','120 g (1 medium)'],['oatly','200 ml'],['self-choc','30 g (1 scoop)'],['cocoa','10 g (1½ tbsp)'],['sukrin','to taste',1],['cacao-nibs','10 g']],
+ method:['Blend banana, oat drink, protein and cocoa until smooth. Tub, freeze flat 24 h.','Process on Ice Cream, Re-spin if needed.','Add cacao nibs through the hole, run Mix-in.'],
+ tip:['u-spark','Add walnuts on the mix-in for the full “chunky monkey” (+ ~90 kcal).'],
+ tags:['frost','high-protein','sugar-free','vegan','chocolate','nutty','nocook','caffeine','creamy','kid']},
+
+{no:16,name:'Salted Marzipan Fudge',cat:'cat-protein',catL:'Protein ice cream',program:'Gelato + Re-spin',icon:'ic-almond',kcal:385,protein:30,per100:77,idx:[4,3,3,0,2,3],
+ desc:'The Marzipan Dream’s grown-up sibling — oat base, melted Sukrin Marzipan and a hit of flaky salt that reads as salted caramel.',
+ ing:[['oatly','300 ml'],['sukrin-marzipan','40 g, grated'],['self-van','30 g (1 scoop)'],['salt','2 pinches, flaky'],['allulose','12 g (1 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Warm the oat drink, whisk in grated marzipan until smooth, cool.','Blend in protein, one pinch of salt, allulose and xanthan. Tub, freeze 24 h.','Process on Gelato, Re-spin with a splash of oat drink.','Finish with the second pinch of salt when serving.'],
+ tip:['u-spark','A tablespoon of PB2 almond butter in the base deepens the almond.'],
+ tags:['frost','high-protein','sugar-free','vegan','nutty','nocook','coffeefree','creamy']},
+
+{no:17,name:'Strawberry Protein Froyo',cat:'cat-fruit',catL:'Frozen yoghurt',program:'Frozen Yoghurt + Re-spin',icon:'ic-strawberry',kcal:265,protein:38,per100:53,idx:[2,3,3,0,3,4],
+ desc:'Pure strawberries-and-cream, pink and light. Frozen strawberries keep the water locked up — 38 g protein for ~265 kcal.',
+ ing:[['strawberry','150 g, frozen'],['alpro','250 ml'],['self-van','45 g (1½ scoops)'],['allulose','24 g (2 tbsp)'],['sukrin','12 g (1 tbsp), to taste'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Soften the strawberries slightly, blend everything smooth.','Tub to MAX, freeze flat 24 h.','Process on Frozen Yoghurt, Re-spin with a splash of almond drink.'],
+ tip:['u-spark','Strawberry cheesecake: swap 50 ml almond drink for a spoon of vegan cream cheese.'],
+ tags:['frost','high-protein','low-cal','sugar-free','vegan','berry','nocook','coffeefree']},
+
+{no:18,name:'Peanut Butter Banana',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Re-spin',icon:'ic-peanut',kcal:410,protein:28,per100:82,idx:[4,3,1,0,1,3],
+ desc:'The “Elvis” — banana and peanut butter blended and frozen. Banana gives the scoop, PB the richness. Dead simple.',
+ ing:[['banana','120 g (1 medium)'],['oatly','200 ml'],['self-van','30 g (1 scoop)'],['peanut-butter','16 g (1 tbsp)']],
+ method:['Blend everything until completely smooth. Tub, freeze flat 24 h.','Process on Ice Cream, Re-spin if needed.'],
+ tip:['u-snow','Cut ~80 kcal: use 2 tbsp PB2 powder instead of peanut butter.'],
+ tags:['frost','high-protein','sugar-free','vegan','nutty','nocook','coffeefree','creamy','kid']},
+
+{no:19,name:'Lemon Sorbet',cat:'cat-soda',catL:'Sorbet',program:'Sorbet + Re-spin',icon:'ic-lemon',kcal:20,protein:0,per100:4,idx:[1,3,4,0,2,1],
+ desc:'The cleanest palate-cleanser there is — sharp, frosty lemon for almost no calories. Three ingredients and water.',
+ ing:[['water','380 ml, cold'],['lemon','80 ml juice (2 lemons)'],['sukrin','40 g (~3 tbsp), to taste'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Whisk everything until the sweetener dissolves and the xanthan is lump-free.','Pour to MAX, freeze flat 24 h.','Process on Sorbet, Re-spin with a splash of water.'],
+ tip:['u-drop','Taste before freezing — it should be a touch too sweet and too sharp; freezing mutes both.'],
+ tags:['frost','very-low-cal','low-cal','sugar-free','vegan','citrus','nocook','coffeefree','icy']},
+
+{no:20,name:'Mixed Berry Sorbet',cat:'cat-fruit',catL:'Sorbet',program:'Sorbet + Re-spin',icon:'ic-berry',kcal:125,protein:2,per100:25,idx:[1,3,3,0,2,1],
+ desc:'The easiest fruit sorbet — a bag of frozen berries, water, sweetener. Intense, jammy, naturally vivid.',
+ ing:[['frozen-berries','250 g'],['water','150 ml, cold'],['sukrin','25 g, to taste'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Thaw the berries a little, blend everything smooth.','Pour to MAX, freeze flat 24 h.','Process on Sorbet, Re-spin with a splash of water.'],
+ tip:['u-spark','A squeeze of lemon brightens it; freeze-dried raspberry powder deepens the colour.'],
+ tags:['frost','low-cal','sugar-free','vegan','berry','nocook','coffeefree','icy']},
+
+{no:21,name:'Watermelon–Lime Slush',cat:'cat-fruit',catL:'Slush',program:'Slush + Re-spin',icon:'ic-melon',kcal:125,protein:2,per100:25,idx:[1,3,2,0,2,1],
+ desc:'Summer in a tub. Watermelon is basically sweet water, so it freezes into the perfect slush — lime keeps it from tasting flat.',
+ ing:[['watermelon','400 g flesh'],['lime','15 ml (1 tbsp)'],['sukrin','to taste',1],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend the watermelon to a juice with lime and xanthan; sweeten only if needed.','Pour to MAX, freeze flat 24 h.','Process on Slush for a loose, drinkable texture.'],
+ tip:['u-leaf','Watermelon-mojito: blend in a few mint leaves; a splash of Sprite Zero makes it fizzy.'],
+ tags:['frost','low-cal','sugar-free','vegan','citrus','nocook','coffeefree','icy','kid']},
+
+{no:22,name:'Piña Colada Sorbet',cat:'cat-fruit',catL:'Sorbet',program:'Sorbet + Re-spin',icon:'ic-pineapple',kcal:265,protein:2,per100:53,idx:[3,4,2,0,2,1],
+ desc:'Pineapple and coconut cream — a creamy tropical sorbet that drinks like the cocktail. Coconut fat keeps it scoopable.',
+ ing:[['pineapple','200 g, frozen'],['coconut-cream','80 ml'],['sukrin','to taste',1],['xanthan','0.6 g (¼ tsp)'],['water','to MAX line',1]],
+ method:['Blend pineapple, coconut cream and xanthan smooth, topping with water to MAX.','Tub, freeze flat 24 h.','Process on Sorbet, Re-spin with a splash of water.'],
+ tip:['u-spark','1 scoop vanilla protein turns it into a piña-colada ice cream (+117 kcal, +24 g).'],
+ tags:['frost','sugar-free','vegan','tropical','nocook','coffeefree','creamy']},
+
+{no:23,name:'Sugar-Free Saft Slush',cat:'cat-soda',catL:'Slush',program:'Slush + Re-spin',icon:'ic-glass',kcal:10,protein:0,per100:2,idx:[1,3,1,0,2,1],
+ desc:'The simplest thing in the book and endlessly variable — whatever sugar-free saft you like, frozen into a slush. Two ingredients.',
+ ing:[['sugarfree-saft','480 ml, ready-mixed'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Mix the saft a touch stronger than you’d drink it (freezing dulls flavour). Whisk in xanthan.','Pour to MAX, freeze flat 24 h.','Process on Slush, Re-spin for a finer texture.'],
+ tip:['u-spark','Most sugar-free saft is ~2–10 kcal/100 ml — check yours. Tropical and raspberry work great.'],
+ tags:['frost','very-low-cal','low-cal','sugar-free','vegan','nocook','coffeefree','icy','kid']},
+
+{no:24,name:'Energy Drink Slush',cat:'cat-soda',catL:'Slush',program:'Slush + Re-spin',icon:'ic-bolt',kcal:10,protein:0,per100:2,idx:[1,3,1,5,2,1],
+ desc:'A frozen pick-me-up from any sugar-free energy drink. All the buzz, basically no calories — a frosty alternative to coffee.',
+ ing:[['energy-drink','480 ml, half-flat'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Stir out most of the fizz, whisk in xanthan.','Pour to MAX with headroom, freeze flat 24 h.','Process on Slush, serve frosty.'],
+ tip:['u-clock','Caffeine warning: a whole tub holds ~1½ cans of caffeine — more than one serving, and not for kids.'],
+ tags:['frost','very-low-cal','low-cal','sugar-free','vegan','nocook','caffeine','icy']}
+,
+/* ===== GLADKOKKEN CLASSICS (from the official booklet) ===== */
+{no:25,name:'Blackberry Cream Ice Cream',cat:'cat-classic',catL:'Gladkokken · Ice Cream',program:'Ice Cream + Re-spin',icon:'ic-berry',kcal:1245,protein:10,per100:222,idx:[5,4,1,0,2,1],
+ desc:'The official Gladkokken blackberry — real cream, lightly whipped, with a touch of vanilla. Serves ~4.',
+ ing:[['blackberry','170 g'],['sugar','70 g'],['lemon','½ tsp zest',1],['cream','240 g (fløte)'],['milk','80 ml'],['vanilla-ext','5 ml (1 tsp)']],
+ method:['Blend berries, sugar, milk and lemon zest to a purée; sieve out the seeds.','Whip cream and vanilla lightly, fold into the berry purée.','Pour into the tub, freeze flat 24 h.','Process on Ice Cream, serve straight away.'],
+ tip:['u-spark','Classic dairy recipe — rich. For a lighter take see the FROST berry froyos.'],tags:['classic','dairy','berry','nocook','creamy','kid']},
+{no:26,name:'Chia & Honey Ice Cream',cat:'cat-classic',catL:'Gladkokken · Ice Cream',program:'Ice Cream + Re-spin',icon:'ic-froyo',kcal:365,protein:19,per100:146,idx:[3,3,1,0,2,2],
+ desc:'Greek yoghurt and chia sweetened with honey — light, tangy and naturally thick. Serves ~4.',
+ ing:[['milk','60 g'],['honey','30 g'],['greek-yoghurt','140 g'],['chia','20 g']],
+ method:['Stir all ingredients to a smooth blend.','Let it stand 5 min so the chia thickens.','Pour into the tub, freeze flat 24 h.','Process on Ice Cream.'],
+ tags:['classic','dairy','nocook','kid']},
+{no:27,name:'Orange Cream (Creamsicle)',cat:'cat-classic',catL:'Gladkokken · Ice Cream',program:'Ice Cream + Re-spin',icon:'ic-orange',kcal:1300,protein:7,per100:255,idx:[5,5,1,0,2,1],
+ desc:'Creamsicle in a tub — orange juice and zest folded into sweet cream. Serves ~4.',
+ ing:[['milk','110 g'],['cream','170 g (fløte)'],['orange-juice','80 g'],['sugar','150 g'],['orange','zest of 2']],
+ method:['Whisk everything to a smooth blend.','Pour into the tub, freeze flat 16–24 h.','Process on Ice Cream.'],tags:['classic','dairy','citrus','nocook','creamy','kid']},
+{no:28,name:'Strawberry Milkshake',cat:'cat-classic',catL:'Gladkokken · Milkshake',program:'Milkshake',icon:'ic-strawberry',kcal:437,protein:7,per100:137,idx:[3,4,1,0,1,1],
+ desc:'Strawberry ice cream blitzed with milk — no freezing, ready in minutes. Serves ~2.',
+ ing:[['icecream','200 g, strawberry'],['milk','120 ml']],method:['Add both to the tub, run Milkshake.','Serve straight away.'],tags:['classic','dairy','berry','quick','nocook','kid']},
+{no:29,name:'Chocolate Milkshake',cat:'cat-classic',catL:'Gladkokken · Milkshake',program:'Milkshake',icon:'ic-choc',kcal:560,protein:8,per100:150,idx:[3,4,1,1,1,1],
+ desc:'Chocolate ice cream and milk, blended thick. No freezing needed. Serves ~2.',
+ ing:[['icecream','300 g, chocolate'],['milk','125 ml']],method:['Add both to the tub, run Milkshake.','Serve straight away.'],tags:['classic','dairy','chocolate','quick','nocook','caffeine','kid']},
+{no:30,name:'Vanilla Milkshake',cat:'cat-classic',catL:'Gladkokken · Milkshake',program:'Milkshake',icon:'ic-vanilla',kcal:430,protein:7,per100:134,idx:[3,4,1,0,1,1],
+ desc:'Vanilla ice cream and milk. The simplest thing the machine makes. Serves ~2.',
+ ing:[['icecream','220 g, vanilla'],['milk','100 ml']],method:['Add both to the tub, run Milkshake.','Serve straight away.'],tags:['classic','dairy','vanilla','quick','nocook','kid']},
+{no:31,name:'Classic Lemon Slushie',cat:'cat-soda',catL:'Gladkokken · Slushie',program:'Slushie',icon:'ic-lemon',kcal:360,protein:0,per100:77,idx:[1,4,1,0,2,1],
+ desc:'Lemon syrup frozen, then loosened with water or Sprite into a slush. Serves ~2.',
+ ing:[['lemon','100 ml juice'],['sugar','85 g'],['water','150 ml (syrup) + 120 ml after'],['sprite','or 120 ml instead of water',1]],
+ method:['Boil water and sugar to a syrup, cool. Mix with lemon juice.','Pour into the tub, freeze 16–24 h.','After freezing add 120 ml water or Sprite, run Slushie.','Stir with a spoon and serve.'],tags:['classic','citrus','icy','cook','kid']},
+{no:32,name:'Fruit Slushie',cat:'cat-soda',catL:'Gladkokken · Slushie',program:'Slushie',icon:'ic-berry',kcal:220,protein:1,per100:60,idx:[1,3,1,0,2,1],
+ desc:'Any diced fruit blended and frozen, then loosened into a slush. Serves ~2.',
+ ing:[['frozen-berries','220 g diced fruit (berry/mango/peach)'],['water','70 ml + 120 ml after'],['sugar','30 g',1],['sprite','or 120 ml instead of water',1]],
+ method:['Freeze the fruit ≥2 h, blend with 70 ml water to a slush.','Pour into the tub, freeze 16–24 h.','After freezing add 120 ml water or Sprite, run Slushie.'],tags:['classic','berry','icy','nocook','kid']},
+{no:33,name:'Raspberry Slushie',cat:'cat-soda',catL:'Gladkokken · Slushie',program:'Slushie',icon:'ic-berry',kcal:244,protein:1,per100:65,idx:[1,3,1,0,2,1],
+ desc:'Raspberry syrup, frozen and loosened with water or Sprite. Serves ~2.',
+ ing:[['raspberry','200 g'],['sugar','35 g'],['water','80 ml + 120 ml after'],['lemon','10 ml'],['sprite','or 120 ml instead of water',1]],
+ method:['Boil water and sugar to a syrup, cool. Blend with raspberries, add lemon; sieve if you like.','Pour into the tub, freeze 16–24 h.','After freezing add 120 ml water or Sprite, run Slushie.'],tags:['classic','berry','icy','cook','kid']},
+{no:34,name:'Blueberry-Chia Light Ice Cream',cat:'cat-classic',catL:'Gladkokken · Light Ice Cream',program:'Light Ice Cream',icon:'ic-froyo',kcal:475,protein:26,per100:85,idx:[3,3,1,0,3,2],
+ desc:'Blueberries, vanilla Greek yoghurt and chia — a thick, lighter ice cream. Serves ~4.',
+ ing:[['blueberry','240 g'],['milk','100 g'],['greek-yoghurt','200 g, vanilla'],['chia','15 g']],
+ method:['Mix everything, pour into the tub.','Freeze flat 16–24 h.','Process on Light Ice Cream.'],tags:['classic','dairy','berry','nocook','kid']},
+{no:35,name:'Vegan Vanilla Light (Oat Cream)',cat:'cat-classic',catL:'Gladkokken · Light Ice Cream',program:'Light Ice Cream',icon:'ic-vanilla',kcal:640,protein:3,per100:149,idx:[4,4,2,0,2,1],
+ desc:'The official vegan light vanilla — oat cream, dates and agave, no eggs or dairy. Serves ~4.',
+ ing:[['oat-cream','250 ml (havrefløte / Oatly iMat)'],['oatly-barista','120 ml (havremelk)'],['vanilla-ext','5 ml (1 tsp)'],['dates','3, pitted'],['agave','45 ml (3 tbsp)']],
+ method:['Blend everything to a smooth blend.','Pour into the tub, freeze flat 16–24 h.','Process on Light Ice Cream.'],tags:['classic','neu','vegan','vanilla','nocook','creamy']},
+{no:36,name:'Lemon Italian Ice',cat:'cat-soda',catL:'Gladkokken · Italian Ice',program:'Italian Ice',icon:'ic-lemon',kcal:549,protein:0,per100:145,idx:[1,4,1,0,2,1],
+ desc:'Crisp lemon Italian ice — syrup and citrus, nothing else. Serves ~4.',
+ ing:[['lemon','130 ml juice + zest of 1'],['water','235 ml'],['sugar','130 g']],
+ method:['Boil water and sugar to a syrup, cool. Mix with lemon juice and zest.','Pour into the tub, freeze 16–24 h.','Process on Italian Ice. Serve with a lemon slice or mint.'],tags:['classic','citrus','icy','cook','kid']},
+{no:37,name:'Strawberry Italian Ice',cat:'cat-soda',catL:'Gladkokken · Italian Ice',program:'Italian Ice',icon:'ic-strawberry',kcal:300,protein:1,per100:56,idx:[1,4,1,0,2,1],
+ desc:'Strawberry purée set as a clean Italian ice. Serves ~4.',
+ ing:[['strawberry','300 g'],['water','120 ml'],['sugar','50 g'],['lemon','15 ml']],
+ method:['Make a syrup of water and sugar, cool.','Blend strawberries and syrup, add lemon; sieve if you like.','Freeze in the tub 16–24 h.','Process on Italian Ice.'],tags:['classic','berry','icy','cook','kid']},
+{no:38,name:'Watermelon Italian Ice',cat:'cat-soda',catL:'Gladkokken · Italian Ice',program:'Italian Ice',icon:'ic-melon',kcal:270,protein:1,per100:50,idx:[1,4,1,0,2,1],
+ desc:'Pure watermelon with lime and a pinch of salt to make it pop. Serves ~4.',
+ ing:[['watermelon','400 g'],['lime','35 ml'],['sugar','35 g'],['salt','pinch']],
+ method:['Blend everything to a juice.','Pour into the tub, freeze 16–24 h.','Process on Italian Ice. Serve with lime or mint.'],tags:['classic','citrus','icy','nocook','kid']},
+{no:39,name:'Custard Vanilla Gelato',cat:'cat-custard',catL:'Gladkokken · Gelato',program:'Gelato + Re-spin',icon:'ic-egg',kcal:1425,protein:12,per100:300,idx:[5,4,1,0,2,2],
+ desc:'True custard gelato — egg yolks cooked to 74–79 °C with cream and a whole vanilla pod. The real deal. Serves ~4.',
+ ing:[['egg-yolk','4 large'],['light-syrup','15 ml (1 tbsp lys sirup)'],['sugar','55 g'],['cream','250 ml (fløte)'],['milk','90 ml'],['vanilla-ext','1 pod, split — or 1 tsp paste']],
+ method:['Whisk yolks, syrup and sugar in a pan until pale and the sugar dissolves.','Add cream, milk and vanilla; stir.','Heat over medium, stirring constantly, to 74–79 °C.','Strain into the tub, cool in an ice bath, freeze 16–24 h.','Process on Gelato.'],
+ tip:['u-fire','Don’t exceed 79 °C or the yolks scramble — a thermometer is worth it here.'],tags:['classic','dairy','egg','vanilla','cook','creamy']},
+{no:40,name:'Custard Chocolate Gelato',cat:'cat-custard',catL:'Gladkokken · Gelato',program:'Gelato + Re-spin',icon:'ic-choc',kcal:755,protein:7,per100:328,idx:[5,4,1,1,2,2],
+ desc:'Dark custard gelato — yolks, cocoa and cream cooked gently. Intense and silky. Serves ~4.',
+ ing:[['egg-yolk','2 large'],['sugar','40 g'],['cocoa','15 g, sifted'],['cream','120 ml (fløte)'],['milk','50 ml']],
+ method:['Whisk yolks, sugar and cocoa in a pan until smooth.','Add cream and milk, stir well.','Heat to 74–79 °C, stirring.','Strain into the tub, cool in an ice bath, freeze 16–24 h.','Process on Gelato.'],tags:['classic','dairy','egg','chocolate','cook','creamy','caffeine']},
+{no:41,name:'Kiwi Sorbet',cat:'cat-soda',catL:'Gladkokken · Sorbet',program:'Sorbet + Re-spin',icon:'ic-berry',kcal:485,protein:2,per100:110,idx:[1,4,2,0,3,1],
+ desc:'Bright green kiwi sorbet — just kiwi and a light syrup. Serves ~4.',
+ ing:[['kiwi','270 g, diced'],['sugar','80 g'],['water','80 g']],
+ method:['Peel and dice kiwi into the tub.','Boil sugar and water until dissolved; pour over the kiwi.','Lid on, freeze 24 h.','Process on Sorbet; Re-spin if grainy.'],tags:['classic','icy','cook','kid']},
+{no:42,name:'Lemon Sorbet (Classic)',cat:'cat-soda',catL:'Gladkokken · Sorbet',program:'Sorbet + Re-spin',icon:'ic-lemon',kcal:472,protein:0,per100:130,idx:[1,4,2,0,2,1],
+ desc:'The sugar version of a lemon sorbet — invert syrup keeps it scoopable. Serves ~4.',
+ ing:[['sugar','100 g'],['light-syrup','15 ml (1 tbsp)'],['water','210 ml warm (60–70 °C)'],['lemon','100 ml juice + 1 tsp zest']],
+ method:['Stir sugar, syrup and warm water until fully dissolved.','Add lemon juice and zest, stir.','Pour into the tub, freeze 24 h.','Process on Sorbet; Re-spin if too firm.'],tags:['classic','citrus','icy','cook','kid']},
+{no:43,name:'Raspberry Sorbet (Classic)',cat:'cat-soda',catL:'Gladkokken · Sorbet',program:'Sorbet + Re-spin',icon:'ic-berry',kcal:634,protein:2,per100:125,idx:[1,4,2,0,2,1],
+ desc:'Cooked raspberry sorbet, deep and tart. Serve with chopped pecans. Serves ~4.',
+ ing:[['raspberry','250 g'],['water','125 g'],['sugar','125 g'],['lemon','20 ml'],['pecans','to serve',1]],
+ method:['Combine raspberries, water, sugar and lemon in a pan.','Boil, then simmer ~3 min until the sugar dissolves and the berries soften.','Cool fully, mash lightly with a fork.','Pour into the tub, freeze 16–24 h.','Process on Sorbet, Re-spin if needed.'],
+ tip:['u-spark','Top with chopped pecans — the booklet’s own suggestion.'],tags:['classic','berry','icy','cook','nutty','kid']},
+{no:44,name:'Pineapple Sorbet (Classic)',cat:'cat-soda',catL:'Gladkokken · Sorbet',program:'Sorbet + Re-spin',icon:'ic-pineapple',kcal:628,protein:1,per100:125,idx:[1,4,2,0,2,1],
+ desc:'Tropical pineapple sorbet cooked to a glossy scoop. Serves ~4.',
+ ing:[['pineapple','250 g, diced'],['sugar','125 g'],['water','125 g'],['lemon','15 g']],
+ method:['Combine all in a pan; boil until the sugar dissolves.','Cool fully, pour into the tub, freeze 16–24 h.','Process on Sorbet; Re-spin if needed.'],tags:['classic','tropical','icy','cook','kid']},
+{no:45,name:'Strawberry Sorbet (Classic)',cat:'cat-soda',catL:'Gladkokken · Sorbet',program:'Sorbet + Re-spin',icon:'ic-strawberry',kcal:523,protein:1,per100:105,idx:[1,4,2,0,2,1],
+ desc:'Cooked-down strawberry sorbet, intense and smooth. Serves ~4.',
+ ing:[['strawberry','250 g, diced'],['sugar','110 g'],['water','110 g'],['lemon','15 g']],
+ method:['Combine all in a pan; boil, simmer 5 min until soft.','Mash lightly, cool fully, pour into the tub, freeze 16–24 h.','Process on Sorbet; Re-spin if needed.'],tags:['classic','berry','icy','cook','kid']},
+{no:46,name:'Blueberry Frozen Yoghurt',cat:'cat-fruit',catL:'Gladkokken · Frozen Yoghurt',program:'Frozen Yoghurt + Re-spin',icon:'ic-froyo',kcal:358,protein:14,per100:70,idx:[3,3,1,0,2,2],
+ desc:'Blueberry froyo — Greek yoghurt for a thicker scoop, sweetened with sugar or honey. Serves ~4.',
+ ing:[['natural-yoghurt','270 g (Greek = thicker)'],['blueberry','150 g, fresh'],['honey','30 g (or sugar)'],['lemon','10 g']],
+ method:['Blend blueberries and lemon to a purée.','Stir into the yoghurt; sweeten to taste.','Pour into the tub, freeze 16–24 h.','Process on Frozen Yoghurt.'],tags:['classic','dairy','berry','nocook','kid']},
+{no:47,name:'Chocolate Frozen Yoghurt',cat:'cat-fruit',catL:'Gladkokken · Frozen Yoghurt',program:'Frozen Yoghurt + Re-spin',icon:'ic-froyo',kcal:413,protein:17,per100:90,idx:[3,3,1,1,2,2],
+ desc:'Tangy chocolate froyo from natural yoghurt, cocoa and a little vanilla. Serves ~4.',
+ ing:[['natural-yoghurt','380 g (Greek = thicker)'],['cocoa','15 g, unsweetened'],['honey','40 g (or sugar)'],['vanilla-ext','5 ml (1 tsp)']],
+ method:['Stir yoghurt, cocoa, sweetener and vanilla to a smooth blend.','Pour into the tub, freeze 16–24 h.','Process on Frozen Yoghurt.'],tags:['classic','dairy','chocolate','nocook','caffeine','kid']},
+{no:48,name:'Strawberry Frozen Yoghurt',cat:'cat-fruit',catL:'Gladkokken · Frozen Yoghurt',program:'Frozen Yoghurt + Re-spin',icon:'ic-strawberry',kcal:320,protein:14,per100:65,idx:[3,3,1,0,2,2],
+ desc:'Fresh strawberry froyo, tangy and light. Serves ~4.',
+ ing:[['natural-yoghurt','270 g'],['strawberry','150 g'],['honey','30 g (or sugar)'],['lemon','10 g']],
+ method:['Blend strawberries and lemon to a purée.','Stir into yoghurt, sweeten to taste.','Pour into the tub, freeze 16–24 h.','Process on Frozen Yoghurt.'],tags:['classic','dairy','berry','nocook','kid']},
+{no:49,name:'Piña Colada Frozen Drink',cat:'cat-fruit',catL:'Gladkokken · Frozen Drink',program:'Frozen Drink',icon:'ic-glass',kcal:445,protein:1,per100:100,idx:[3,4,1,0,2,1],
+ desc:'Pineapple juice and coconut milk, frozen then blended loose — white rum optional. Serves ~2.',
+ ing:[['pineapple-juice','150 ml'],['coconut-cream','150 ml (coconut milk, shaken)'],['rum','35 ml white rum',1],['water','120 ml, after']],
+ method:['Blend pineapple juice, coconut milk and rum (if using). Pour into the tub, freeze 16–24 h.','After freezing add 120 ml water, run Frozen Drink.','Serve with pineapple and a cherry.'],tags:['classic','vegan','tropical','nocook']},
+/* ===== NEW-INGREDIENT RECIPES ===== */
+{no:50,name:'Velvet Vanilla (Oat Cream)',cat:'cat-classic',catL:'New · Vegan ice cream',program:'Gelato + Re-spin',icon:'ic-vanilla',kcal:400,protein:3,per100:110,idx:[5,3,2,0,2,1],
+ desc:'The creamiest vegan vanilla here — Oatly iMat oat cream (13% fat) does what dairy cream does, with bean-paste flecks.',
+ ing:[['oat-cream','250 ml (Oatly iMat 13%)'],['oatly-barista','100 ml'],['vanilla-ext','5 ml (1 tsp paste)'],['allulose','24 g (2 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend everything smooth.','Tub, freeze flat 24 h.','Process on Gelato (or Ice Cream), Re-spin to silky.'],
+ tip:['u-spark','Oat cream’s 13% fat is the secret — far creamier than oat drink alone.'],tags:['neu','vegan','sugar-free','vanilla','nocook','creamy','kid']},
+{no:51,name:'Date-Caramel Swirl',cat:'cat-classic',catL:'New · Vegan ice cream',program:'Ice Cream + Re-spin',icon:'ic-date',kcal:330,protein:3,per100:95,idx:[4,4,2,0,2,1],
+ desc:'Blended Medjool dates make a natural caramel — no sugar, just fruit, with a salted edge.',
+ ing:[['dates','6, pitted & soaked'],['oatly-barista','300 ml'],['salt','2 pinches, flaky'],['vanilla-ext','½ tsp'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Soak dates in warm water 10 min, drain.','Blend dates, oat drink, salt, vanilla and xanthan very smooth.','Tub, freeze flat 24 h.','Process on Ice Cream, Re-spin with a splash of oat drink.'],tags:['neu','vegan','nutty','nocook','creamy','kid']},
+{no:52,name:'Honey-Vanilla Greek Froyo',cat:'cat-fruit',catL:'New · Frozen yoghurt',program:'Frozen Yoghurt + Re-spin',icon:'ic-froyo',kcal:440,protein:35,per100:110,idx:[3,3,1,0,2,4],
+ desc:'Just Greek yoghurt, honey and vanilla — tangy, thick, and genuinely high in protein.',
+ ing:[['greek-yoghurt','350 g'],['honey','30 g'],['vanilla-ext','5 ml (1 tsp)'],['milk','40 ml, to loosen',1]],
+ method:['Stir yoghurt, honey and vanilla smooth (loosen with milk if very thick).','Tub, freeze flat 16–24 h.','Process on Frozen Yoghurt, Re-spin.'],tags:['neu','dairy','high-protein','vanilla','nocook','kid']},
+{no:53,name:'Vegan Chocolate Oat-Cream Gelato',cat:'cat-classic',catL:'New · Vegan gelato',program:'Gelato + Mix-in',icon:'ic-choc',kcal:520,protein:4,per100:165,idx:[5,4,2,1,2,1],
+ desc:'A dense, dark vegan chocolate gelato — oat cream gives the fat, agave the gloss, cocoa the depth.',
+ ing:[['oat-cream','250 ml (Oatly iMat 13%)'],['cocoa','20 g (3 tbsp)'],['agave','30 ml (2 tbsp)'],['allulose','12 g (1 tbsp)'],['xanthan','0.6 g (¼ tsp)'],['dark-choc','15 g',1]],
+ method:['Blend oat cream, cocoa, agave, allulose and xanthan smooth.','Tub, freeze flat 24 h.','Process on Gelato, Re-spin; Mix-in dark-chocolate shards if you like.'],tags:['neu','vegan','chocolate','nocook','caffeine','creamy']},
+{no:54,name:'Agave Watermelon-Lime Sorbet',cat:'cat-fruit',catL:'New · Sorbet',program:'Sorbet + Re-spin',icon:'ic-melon',kcal:160,protein:2,per100:32,idx:[1,4,2,0,2,1],
+ desc:'Like the FROST watermelon slush but sweetened with agave — glossier and fuller-bodied.',
+ ing:[['watermelon','400 g flesh'],['agave','20 ml (4 tsp)'],['lime','15 ml (1 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend everything to a juice.','Tub, freeze flat 24 h.','Process on Sorbet, Re-spin.'],tags:['neu','vegan','low-cal','citrus','nocook','icy','kid']},
+{no:55,name:'Almond Butter Protein',cat:'cat-protein',catL:'New · Protein ice cream',program:'Ice Cream + Re-spin',icon:'ic-almond',kcal:296,protein:40,per100:60,idx:[2,3,3,0,3,4],
+ desc:'Deep roasted-almond flavour from PB2 almond butter — high protein, low fat. For the almond lover.',
+ ing:[['alpro','300 ml'],['self-van','45 g (1½ scoops)'],['almond-butter','18 g (3 tbsp PB2 almond)'],['allulose','24 g (2 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend everything smooth.','Tub, freeze flat 24 h.','Process on Ice Cream, Re-spin with a splash of almond drink.'],tags:['frost','neu','high-protein','low-cal','sugar-free','vegan','nutty','nocook','coffeefree']},
+{no:56,name:'Honey-Banana Oat',cat:'cat-protein',catL:'New · Ice cream',program:'Ice Cream + Re-spin',icon:'ic-banana',kcal:270,protein:3,per100:80,idx:[4,4,1,0,1,2],
+ desc:'Banana and honey over creamy Barista oat — caramel-sweet, no added sugar needed. Add a scoop of protein to bump it up.',
+ ing:[['banana','120 g (1 medium)'],['oatly-barista','200 ml'],['honey','15 g (1 tbsp)'],['self-van','30 g (1 scoop)',1]],
+ method:['Blend banana, oat drink and honey smooth (add protein if using).','Tub, freeze flat 24 h.','Process on Ice Cream, Re-spin if needed.'],tags:['neu','vegan','nocook','creamy','kid']},
+{no:57,name:'Salted Honey Oat Gelato',cat:'cat-classic',catL:'New · Vegan gelato',program:'Gelato + Re-spin',icon:'ic-honey',kcal:435,protein:3,per100:125,idx:[5,4,1,0,2,1],
+ desc:'Salted honey and oat cream — floral, rich, salted-caramel-adjacent. Vegan.',
+ ing:[['oat-cream','220 ml (Oatly iMat 13%)'],['oatly-barista','80 ml'],['honey','30 g'],['salt','2 pinches, flaky'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Warm gently to dissolve the honey, cool. Blend with xanthan.','Tub, freeze flat 24 h.','Process on Gelato, Re-spin; finish with flaky salt.'],tags:['neu','vegan','nocook','creamy']}
+,
+/* ===== VARIATIONS — sugar-free sorbet per fruit (FROST) ===== */
+{no:58,name:'Strawberry Sorbet (FROST)',cat:'cat-fruit',catL:'Sugar-free sorbet',program:'Sorbet + Re-spin',icon:'ic-strawberry',kcal:85,protein:2,per100:17,idx:[1,3,2,0,2,1],
+ desc:'Pure strawberry, no sugar — allulose keeps it scoopable. The low-cal answer to the classic.',
+ ing:[['strawberry','250 g'],['water','150 ml'],['allulose','24 g (2 tbsp)'],['lemon','10 ml',1],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend everything smooth.','Tub, freeze flat 24 h.','Process on Sorbet, Re-spin with a splash of water.'],tags:['frost','very-low-cal','low-cal','sugar-free','vegan','berry','nocook','coffeefree','icy']},
+{no:59,name:'Raspberry Sorbet (FROST)',cat:'cat-fruit',catL:'Sugar-free sorbet',program:'Sorbet + Re-spin',icon:'ic-berry',kcal:135,protein:2,per100:27,idx:[1,3,2,0,2,1],
+ desc:'Tart raspberry sorbet, sugar-free. Sieve the seeds if you like it smooth.',
+ ing:[['raspberry','250 g'],['water','150 ml'],['allulose','30 g (2½ tbsp)'],['lemon','10 ml',1],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend smooth; sieve for a seedless sorbet.','Tub, freeze flat 24 h.','Process on Sorbet, Re-spin.'],tags:['frost','low-cal','sugar-free','vegan','berry','nocook','coffeefree','icy']},
+{no:60,name:'Blueberry Sorbet (FROST)',cat:'cat-fruit',catL:'Sugar-free sorbet',program:'Sorbet + Re-spin',icon:'ic-berry',kcal:145,protein:2,per100:29,idx:[1,3,2,0,2,1],
+ desc:'Deep blueberry sorbet, no added sugar.',
+ ing:[['blueberry','250 g'],['water','130 ml'],['allulose','24 g (2 tbsp)'],['lemon','10 ml',1],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend smooth.','Tub, freeze flat 24 h.','Process on Sorbet, Re-spin.'],tags:['frost','low-cal','sugar-free','vegan','berry','nocook','coffeefree','icy']},
+{no:61,name:'Blackberry Sorbet (FROST)',cat:'cat-fruit',catL:'Sugar-free sorbet',program:'Sorbet + Re-spin',icon:'ic-berry',kcal:110,protein:2,per100:22,idx:[1,3,2,0,2,1],
+ desc:'The sugar-free version of the classic blackberry — fruit-forward and dark.',
+ ing:[['blackberry','250 g'],['water','150 ml'],['allulose','28 g (2¼ tbsp)'],['lemon','10 ml',1],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend smooth; sieve out seeds if you like.','Tub, freeze flat 24 h.','Process on Sorbet, Re-spin.'],tags:['frost','low-cal','sugar-free','vegan','berry','nocook','coffeefree','icy']},
+{no:62,name:'Cherry Sorbet (FROST)',cat:'cat-fruit',catL:'Sugar-free sorbet',program:'Sorbet + Re-spin',icon:'ic-cherry',kcal:160,protein:2,per100:32,idx:[1,4,2,0,2,1],
+ desc:'Sweet-sharp cherry sorbet, no sugar.',
+ ing:[['cherry','250 g, pitted'],['water','130 ml'],['allulose','24 g (2 tbsp)'],['lemon','10 ml',1],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend smooth.','Tub, freeze flat 24 h.','Process on Sorbet, Re-spin.'],tags:['frost','low-cal','sugar-free','vegan','berry','nocook','coffeefree','icy']},
+{no:63,name:'Mango Sorbet (FROST)',cat:'cat-fruit',catL:'Sugar-free sorbet',program:'Sorbet + Re-spin',icon:'ic-mango',kcal:155,protein:2,per100:31,idx:[1,4,2,0,2,1],
+ desc:'Pure mango sorbet — no coconut, no sugar. Bright and tropical.',
+ ing:[['mango','250 g'],['water','150 ml'],['lime','15 ml (1 tbsp)'],['allulose','18 g (1½ tbsp)'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend smooth.','Tub, freeze flat 24 h.','Process on Sorbet, Re-spin.'],tags:['frost','low-cal','sugar-free','vegan','tropical','citrus','nocook','coffeefree','icy']},
+{no:64,name:'Pineapple Sorbet (FROST)',cat:'cat-fruit',catL:'Sugar-free sorbet',program:'Sorbet + Re-spin',icon:'ic-pineapple',kcal:130,protein:1,per100:26,idx:[1,4,2,0,2,1],
+ desc:'Sugar-free pineapple sorbet — sharp and refreshing.',
+ ing:[['pineapple','250 g'],['water','150 ml'],['allulose','18 g (1½ tbsp)'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend smooth.','Tub, freeze flat 24 h.','Process on Sorbet, Re-spin.'],tags:['frost','low-cal','sugar-free','vegan','tropical','nocook','coffeefree','icy']},
+{no:65,name:'Kiwi Sorbet (FROST)',cat:'cat-fruit',catL:'Sugar-free sorbet',program:'Sorbet + Re-spin',icon:'ic-berry',kcal:170,protein:2,per100:34,idx:[1,3,2,0,3,1],
+ desc:'The sugar-free kiwi — green, tangy, no syrup.',
+ ing:[['kiwi','270 g, peeled'],['water','100 ml'],['allulose','24 g (2 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend briefly (over-blending crushes the seeds bitter).','Tub, freeze flat 24 h.','Process on Sorbet, Re-spin.'],tags:['frost','low-cal','sugar-free','vegan','nocook','coffeefree','icy']},
+/* ===== protein froyo fruit-swaps ===== */
+{no:66,name:'Blueberry Protein Froyo',cat:'cat-fruit',catL:'Frozen yoghurt',program:'Frozen Yoghurt + Re-spin',icon:'ic-froyo',kcal:310,protein:40,per100:62,idx:[2,3,3,0,3,4],
+ desc:'Frozen-berry froyo, blueberry edition — 40 g protein, light and tangy.',
+ ing:[['blueberry','150 g, frozen'],['alpro','250 ml'],['self-van','45 g (1½ scoops)'],['allulose','24 g (2 tbsp)'],['sukrin','to taste',1],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend everything smooth.','Tub, freeze flat 24 h.','Process on Frozen Yoghurt, Re-spin.'],tags:['frost','high-protein','low-cal','sugar-free','vegan','berry','nocook','coffeefree']},
+{no:67,name:'Raspberry Protein Froyo',cat:'cat-fruit',catL:'Frozen yoghurt',program:'Frozen Yoghurt + Re-spin',icon:'ic-froyo',kcal:300,protein:40,per100:60,idx:[2,3,3,0,3,4],
+ desc:'Raspberry protein froyo — sharp and pink.',
+ ing:[['raspberry','150 g, frozen'],['alpro','250 ml'],['self-van','45 g (1½ scoops)'],['allulose','24 g (2 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend smooth.','Tub, freeze flat 24 h.','Process on Frozen Yoghurt, Re-spin.'],tags:['frost','high-protein','low-cal','sugar-free','vegan','berry','nocook','coffeefree']},
+{no:68,name:'Cherry Protein Froyo',cat:'cat-fruit',catL:'Frozen yoghurt',program:'Frozen Yoghurt + Re-spin',icon:'ic-cherry',kcal:315,protein:40,per100:63,idx:[2,3,3,0,3,4],
+ desc:'Cherry protein froyo — like a frozen cherry yoghurt, 40 g protein.',
+ ing:[['cherry','150 g, frozen pitted'],['alpro','250 ml'],['self-van','45 g (1½ scoops)'],['allulose','24 g (2 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend smooth.','Tub, freeze flat 24 h.','Process on Frozen Yoghurt, Re-spin.'],tags:['frost','high-protein','low-cal','sugar-free','vegan','berry','nocook','coffeefree']},
+{no:69,name:'Mango Protein Froyo',cat:'cat-fruit',catL:'Frozen yoghurt',program:'Frozen Yoghurt + Re-spin',icon:'ic-mango',kcal:330,protein:40,per100:66,idx:[3,3,3,0,3,4],
+ desc:'Tropical mango protein froyo — creamy and bright.',
+ ing:[['mango','150 g, frozen'],['alpro','250 ml'],['self-van','45 g (1½ scoops)'],['allulose','18 g (1½ tbsp)'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend smooth.','Tub, freeze flat 24 h.','Process on Frozen Yoghurt, Re-spin.'],tags:['frost','high-protein','low-cal','sugar-free','vegan','tropical','nocook','coffeefree']},
+/* ===== protein flavour variations ===== */
+{no:70,name:'Coconut Protein Ice Cream',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Re-spin',icon:'ic-glass',kcal:430,protein:39,per100:86,idx:[4,3,3,0,3,4],
+ desc:'Creamy coconut protein — coconut milk powder gives the fat and flavour, vanilla protein the body.',
+ ing:[['oatly','300 ml'],['self-van','45 g (1½ scoops)'],['coconut-cream','20 g coconut milk powder'],['allulose','24 g (2 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend everything smooth.','Tub, freeze flat 24 h.','Process on Ice Cream, Re-spin.'],tags:['frost','high-protein','sugar-free','vegan','tropical','nutty','nocook','coffeefree','creamy']},
+{no:71,name:'Chocolate-Orange Protein',cat:'cat-protein',catL:'Protein ice cream',program:'Gelato + Re-spin',icon:'ic-choc',kcal:420,protein:54,per100:84,idx:[3,3,3,1,4,5],
+ desc:'Double chocolate with orange zest — the “Terry’s” of protein ice creams. 54 g protein.',
+ ing:[['oatly','330 ml'],['self-choc','60 g (2 scoops)'],['cocoa','10 g (1½ tbsp)'],['orange','zest of 1'],['allulose','24 g (2 tbsp)'],['xanthan','½ tsp']],
+ method:['Blend everything smooth.','Tub, freeze flat 24 h.','Process on Gelato, Re-spin with a splash of oat drink.'],tags:['frost','high-protein','sugar-free','vegan','chocolate','citrus','nocook','caffeine','creamy']},
+{no:72,name:'Strawberry-Banana Protein',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Re-spin',icon:'ic-strawberry',kcal:340,protein:26,per100:68,idx:[4,3,1,0,1,3],
+ desc:'Strawberry-banana smoothie, frozen — banana keeps it soft, no allulose needed.',
+ ing:[['banana','120 g (1 medium)'],['strawberry','80 g'],['oatly','200 ml'],['self-van','30 g (1 scoop)'],['sukrin','to taste',1]],
+ method:['Blend everything smooth.','Tub, freeze flat 24 h.','Process on Ice Cream, Re-spin if needed.'],tags:['frost','high-protein','sugar-free','vegan','berry','nocook','coffeefree','creamy','kid']},
+{no:73,name:'Snickers Protein (Choc-PB-Banana)',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Mix-in',icon:'ic-peanut',kcal:490,protein:28,per100:98,idx:[4,3,1,1,2,3],
+ desc:'Chocolate, peanut butter and banana with dark-chocolate rubble — a frozen Snickers.',
+ ing:[['banana','120 g (1 medium)'],['oatly','200 ml'],['self-choc','30 g (1 scoop)'],['peanut-butter','16 g (1 tbsp)'],['dark-choc','15 g, mix-in']],
+ method:['Blend everything except the mix-in chocolate. Tub, freeze flat 24 h.','Process on Ice Cream, Re-spin.','Add chopped chocolate through the hole, run Mix-in.'],tags:['frost','high-protein','sugar-free','vegan','chocolate','nutty','nocook','caffeine','creamy','kid']},
+/* ===== base swaps (availability / lighter / richer) ===== */
+{no:74,name:'Double Chocolate (Almond, lighter)',cat:'cat-protein',catL:'Protein ice cream',program:'Gelato + Re-spin',icon:'ic-choc',kcal:325,protein:54,per100:65,idx:[2,3,3,1,4,5],
+ desc:'Out of oat drink? The almond-base version of #1 — leaner and lower-cal, a touch icier. Extra xanthan for body.',
+ ing:[['alpro','330 ml'],['self-choc','60 g (2 scoops)'],['cocoa','15 g (2 tbsp)'],['allulose','24 g (2 tbsp)'],['sukrin','8 g (2 tsp), to taste'],['xanthan','1.2 g (½ tsp)']],
+ method:['Blend smooth.','Tub, freeze flat 24 h.','Process on Gelato, Re-spin (almond bases need it most).'],tags:['frost','high-protein','low-cal','sugar-free','vegan','chocolate','nocook','caffeine']},
+{no:75,name:'Vanilla (Oat-Cream Luxe)',cat:'cat-protein',catL:'Protein ice cream',program:'Gelato + Re-spin',icon:'ic-vanilla',kcal:390,protein:39,per100:74,idx:[4,3,3,0,2,4],
+ desc:'The richest vanilla protein — a splash of oat cream lifts #2 from creamy to luxurious.',
+ ing:[['oatly','280 ml'],['oat-cream','50 ml (Oatly iMat 13%)'],['self-van','45 g (1½ scoops)'],['vanilla-ext','10 ml (2 tsp)'],['allulose','24 g (2 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend smooth.','Tub, freeze flat 24 h.','Process on Gelato, Re-spin to silky.'],tags:['frost','high-protein','sugar-free','vegan','vanilla','nocook','coffeefree','creamy','kid']},
+/* ===== soda / slush combos ===== */
+{no:76,name:'Sprite Zero Lemon Slush',cat:'cat-soda',catL:'Soda slush',program:'Slush + Re-spin',icon:'ic-lemon',kcal:10,protein:0,per100:2,idx:[1,3,1,0,2,1],
+ desc:'Lemon instead of lime — a frosty zero-cal lemonade slush.',
+ ing:[['sprite-zero','450 ml, half-flat'],['lemon','15 ml (1 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Stir out the fizz, whisk in lemon and xanthan.','Pour to MAX with headroom, freeze 24 h.','Process on Slush, Re-spin.'],tags:['frost','very-low-cal','low-cal','sugar-free','vegan','citrus','nocook','coffeefree','icy','kid']},
+{no:77,name:'Cherry Cola Slush',cat:'cat-soda',catL:'Soda slush',program:'Sorbet / Slush + Re-spin',icon:'ic-cola',kcal:45,protein:1,per100:9,idx:[1,3,1,2,2,1],
+ desc:'Cola Zero with real frozen cherries blended in — cherry cola, frozen.',
+ ing:[['cola-zero','400 ml, half-flat'],['cherry','60 g, frozen pitted'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Stir the cola flat, blend with cherries and xanthan.','Pour to MAX with headroom, freeze 24 h.','Process on Sorbet/Slush, Re-spin.'],tags:['frost','low-cal','sugar-free','berry','nocook','caffeine','icy','kid']},
+{no:78,name:'Berry Lemonade Slush',cat:'cat-soda',catL:'Soda slush',program:'Slush + Re-spin',icon:'ic-berry',kcal:40,protein:1,per100:8,idx:[1,3,1,0,2,1],
+ desc:'Sprite Zero, a handful of berries and lemon — a frozen berry lemonade for ~40 kcal.',
+ ing:[['sprite-zero','400 ml, half-flat'],['frozen-berries','60 g'],['lemon','10 ml',1],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend everything (let the soda go half-flat first).','Pour to MAX with headroom, freeze 24 h.','Process on Slush, Re-spin.'],tags:['frost','very-low-cal','low-cal','sugar-free','vegan','berry','citrus','nocook','coffeefree','icy','kid']},
+/* ===== honey / agave sweetened ===== */
+{no:79,name:'Honey Lemon Sorbet',cat:'cat-soda',catL:'Sorbet',program:'Sorbet + Re-spin',icon:'ic-lemon',kcal:170,protein:0,per100:34,idx:[1,4,1,0,2,1],
+ desc:'Lemon sorbet sweetened with honey instead of sugar — floral and rounded.',
+ ing:[['water','380 ml, cold'],['lemon','80 ml juice'],['honey','50 g'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Warm a little water to dissolve the honey, cool. Whisk with the rest.','Pour to MAX, freeze flat 24 h.','Process on Sorbet, Re-spin.'],tags:['neu','low-cal','citrus','nocook','icy','kid']},
+{no:80,name:'Agave Raspberry Sorbet',cat:'cat-fruit',catL:'Sorbet',program:'Sorbet + Re-spin',icon:'ic-berry',kcal:255,protein:2,per100:50,idx:[1,4,2,0,2,1],
+ desc:'Raspberry sorbet sweetened with agave — glossy, vegan, fuller-bodied than the sugar-free one.',
+ ing:[['raspberry','250 g'],['water','150 ml'],['agave','40 ml (2½ tbsp)'],['lemon','10 ml',1],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend smooth; sieve if you like.','Tub, freeze flat 24 h.','Process on Sorbet, Re-spin.'],tags:['neu','vegan','berry','nocook','icy','kid']},
+/* ===== more protein flavours ===== */
+{no:81,name:'Cookie Dough Protein',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Mix-in',icon:'ic-strac',kcal:435,protein:41,per100:87,idx:[3,3,3,0,3,4],
+ desc:'Vanilla protein base with a pinch of salt, dark-chocolate chips folded through — choc-chip cookie-dough vibes.',
+ ing:[['oatly','330 ml'],['self-van','45 g (1½ scoops)'],['vanilla-ext','5 ml (1 tsp)'],['allulose','24 g (2 tbsp)'],['salt','pinch'],['dark-choc','20 g, chopped, mix-in']],
+ method:['Blend the base smooth. Tub, freeze flat 24 h.','Process on Ice Cream, Re-spin.','Add chopped chocolate through the hole, run Mix-in.'],tags:['frost','high-protein','sugar-free','vegan','chocolate','vanilla','nocook','caffeine','creamy','kid']},
+{no:82,name:'Mango-Banana Protein',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Re-spin',icon:'ic-mango',kcal:335,protein:26,per100:67,idx:[4,3,1,0,1,3],
+ desc:'Mango and banana — a creamy tropical protein nice-cream, no added sugar needed.',
+ ing:[['mango','100 g'],['banana','100 g'],['oatly','150 ml'],['self-van','30 g (1 scoop)']],
+ method:['Blend everything smooth.','Tub, freeze flat 24 h.','Process on Ice Cream, Re-spin if needed.'],tags:['frost','high-protein','sugar-free','vegan','tropical','nocook','coffeefree','creamy','kid']},
+{no:83,name:'Triple Berry Protein Froyo (Oat)',cat:'cat-fruit',catL:'Frozen yoghurt',program:'Frozen Yoghurt + Re-spin',icon:'ic-berry',kcal:365,protein:40,per100:73,idx:[3,3,3,0,3,4],
+ desc:'The creamier oat-base version of the frozen-berry froyo — richer than the almond original.',
+ ing:[['frozen-berries','150 g'],['oatly','250 ml'],['self-van','45 g (1½ scoops)'],['allulose','24 g (2 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend smooth.','Tub, freeze flat 24 h.','Process on Frozen Yoghurt, Re-spin.'],tags:['frost','high-protein','sugar-free','vegan','berry','nocook','coffeefree','creamy']},
+{no:84,name:'Lemon Cheesecake Protein',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Re-spin',icon:'ic-lemon',kcal:330,protein:39,per100:66,idx:[3,3,3,0,3,4],
+ desc:'Bright lemon and vanilla protein — tastes like frozen lemon cheesecake. Add a spoon of vegan cream cheese for the full effect.',
+ ing:[['oatly','300 ml'],['self-van','45 g (1½ scoops)'],['lemon','30 ml juice + zest'],['vanilla-ext','5 ml (1 tsp)'],['allulose','24 g (2 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
+ method:['Blend everything smooth.','Tub, freeze flat 24 h.','Process on Ice Cream, Re-spin.'],tags:['frost','high-protein','sugar-free','vegan','citrus','nocook','coffeefree','creamy']}
+];
+
+/* ============================ STATE & RENDER ============================ */
+var state = { have:new Set(), tags:new Set(), tagMode:'or', q:'' };
+
+function dots(n){var on=Math.max(0,Math.min(5,n|0));return '<span class="on">'+'●'.repeat(on)+'</span><span class="off">'+'○'.repeat(5-on)+'</span>';}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+
+function recipeRequires(r){ /* required (non-opt, non-basic) ingredient keys */
+  return r.ing.filter(function(x){return !x[2] && !BASICS[x[0]];}).map(function(x){return x[0];});
+}
+function canMake(r){
+  if(state.have.size===0) return true;
+  return recipeRequires(r).every(function(k){return state.have.has(k);});
+}
+function tagMatch(r){
+  if(state.tags.size===0) return true;
+  var arr=[...state.tags];
+  return state.tagMode==='and' ? arr.every(function(t){return r.tags.indexOf(t)>=0;})
+                               : arr.some(function(t){return r.tags.indexOf(t)>=0;});
+}
+function qMatch(r){
+  if(!state.q) return true;
+  var hay=(r.name+' '+r.catL+' '+r.ing.map(function(x){return (ING[x[0]]||{}).n||x[0];}).join(' ')+' '+r.tags.map(function(t){return (TAGS[t]||{}).l||t;}).join(' ')).toLowerCase();
+  return hay.indexOf(state.q.toLowerCase())>=0;
+}
+
+function cardHTML(r){
+  var idxRow='<div class="indices">'
+    +idxItem('','Protein',r.idx[5])+idxItem('','Creamy',r.idx[0])+idxItem('','Sweet',r.idx[1])
+    +idxItem('spin','Re-spin',r.idx[4])+idxItem('lax','Laxative',r.idx[2])
+    +(r.idx[3]>0?idxItem('caf','Caffeine',r.idx[3]):'')+'</div>';
+  var ings=r.ing.map(function(x){
+    var name=(ING[x[0]]||{}).n||x[0];
+    var miss=(state.have.size>0 && !x[2] && !BASICS[x[0]] && !state.have.has(x[0]));
+    return '<li class="'+(x[2]?'opt ':'')+(miss?'miss':'')+'"><span class="nm">'+esc(name)+'</span><span class="q">'+esc(x[1])+'</span></li>';
+  }).join('');
+  var steps=r.method.map(function(m){return '<li>'+m+'</li>';}).join('');
+  var tags=r.tags.map(function(t){return '<span class="tg" data-tag="'+t+'">'+((TAGS[t]||{}).l||t)+'</span>';}).join('');
+  var caf=r.idx[3]>0;
+  return '<article class="card '+r.cat+'">'
+    +'<div class="card-head"><div class="card-ic"><svg><use href="#'+r.icon+'"/></svg></div>'
+    +'<div class="card-titles"><div class="card-tag">'+r.catL+'</div><h3>'+esc(r.name)+'</h3><div class="card-no">No. '+r.no+'</div></div></div>'
+    +'<p class="card-desc">'+r.desc+'</p>'
+    +'<div class="macros"><div class="macro hero"><div class="v">~'+r.kcal+'</div><div class="l">kcal · pot</div></div>'
+    +'<div class="macro hero"><div class="v">'+r.protein+'<small>&nbsp;g</small></div><div class="l">protein · pot</div></div>'
+    +'<div class="macro"><div class="v">~'+r.per100+'</div><div class="l">kcal · 100 ml</div></div>'
+    +'<div class="macro prog"><div class="v">'+r.program.replace(' + ','<br>+ ')+'</div><div class="l">program</div></div></div>'
+    +idxRow
+    +'<div class="block-h">Ingredients</div><ul class="ingredients">'+ings+'</ul>'
+    +'<div class="block-h">Method</div><ol class="method">'+steps+'</ol>'
+    +(r.tip?'<div class="tip"><svg class="ic"><use href="#'+r.tip[0]+'"/></svg><div>'+r.tip[1]+'</div></div>':'')
+    +'<div class="card-spacer"></div><div class="card-tags">'+tags+'</div>'
+    +'</article>';
+}
+function idxItem(cls,label,val){return '<span class="idx '+cls+'"><span>'+label+'</span><span class="dots">'+dots(val)+'</span></span>';}
+
+function render(){
+  var list=RECIPES.filter(function(r){return canMake(r)&&tagMatch(r)&&qMatch(r);});
+  document.getElementById('grid').innerHTML=list.map(cardHTML).join('');
+  document.getElementById('empty').style.display=list.length?'none':'block';
+  document.getElementById('count').textContent=list.length+' of '+RECIPES.length+' recipes';
+  renderActive();
+  document.querySelectorAll('.tg').forEach(function(el){el.onclick=function(){toggleTag(el.dataset.tag);};});
+}
+
+/* ============================ FILTER UI ============================ */
+function buildChips(){
+  // ingredient chips grouped
+  var groups={}; Object.keys(ING).forEach(function(k){var g=ING[k].g;(groups[g]=groups[g]||[]).push(k);});
+  var html='';
+  Object.keys(groups).forEach(function(g){
+    html+='<div style="width:100%;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin:6px 0 2px;font-weight:600">'+g+'</div>';
+    groups[g].forEach(function(k){html+='<span class="chip ing" data-k="'+k+'">'+esc(ING[k].n)+'</span>';});
+  });
+  document.getElementById('ingChips').innerHTML=html;
+  // tag chips grouped
+  var tg={}; Object.keys(TAGS).forEach(function(k){var g=TAGS[k].g;(tg[g]=tg[g]||[]).push(k);});
+  var th='';
+  Object.keys(tg).forEach(function(g){
+    th+='<div style="width:100%;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin:6px 0 2px;font-weight:600">'+g+'</div>';
+    tg[g].forEach(function(k){th+='<span class="chip tag" data-t="'+k+'">'+esc(TAGS[k].l)+'</span>';});
+  });
+  document.getElementById('tagChips').innerHTML=th;
+  document.querySelectorAll('.chip.ing').forEach(function(el){el.onclick=function(){toggleHave(el.dataset.k);};});
+  document.querySelectorAll('.chip.tag').forEach(function(el){el.onclick=function(){toggleTag(el.dataset.t);};});
+}
+function syncChips(){
+  document.querySelectorAll('.chip.ing').forEach(function(el){el.classList.toggle('on',state.have.has(el.dataset.k));});
+  document.querySelectorAll('.chip.tag').forEach(function(el){el.classList.toggle('on',state.tags.has(el.dataset.t));});
+}
+function toggleHave(k){state.have.has(k)?state.have.delete(k):state.have.add(k);syncChips();render();}
+function toggleTag(t){state.tags.has(t)?state.tags.delete(t):state.tags.add(t);syncChips();render();}
+function renderActive(){
+  var el=document.getElementById('activeRow');var parts=[];
+  if(state.have.size) parts.push('<span class="lab">Have:</span>'+[...state.have].map(function(k){return '<span class="chip on ing" data-k="'+k+'">'+esc((ING[k]||{}).n||k)+' <span class="x">×</span></span>';}).join(''));
+  if(state.tags.size) parts.push('<span class="lab">Tags ('+(state.tagMode==='and'?'all':'any')+'):</span>'+[...state.tags].map(function(t){return '<span class="chip on tag" data-t="'+t+'">'+esc((TAGS[t]||{}).l||t)+' <span class="x">×</span></span>';}).join(''));
+  el.innerHTML=parts.join(' ');
+  el.querySelectorAll('.chip.ing').forEach(function(c){c.onclick=function(){toggleHave(c.dataset.k);};});
+  el.querySelectorAll('.chip.tag').forEach(function(c){c.onclick=function(){toggleTag(c.dataset.t);};});
+}
+
+document.getElementById('toggleFilters').onclick=function(){document.getElementById('filterGroups').classList.toggle('show');this.classList.toggle('active');};
+document.getElementById('resetBtn').onclick=function(){state.have.clear();state.tags.clear();state.q='';document.getElementById('q').value='';syncChips();render();};
+document.getElementById('q').oninput=function(){state.q=this.value.trim();render();};
+document.getElementById('orBtn').onclick=function(){state.tagMode='or';this.classList.add('on');document.getElementById('andBtn').classList.remove('on');render();};
+document.getElementById('andBtn').onclick=function(){state.tagMode='and';this.classList.add('on');document.getElementById('orBtn').classList.remove('on');render();};
+document.getElementById('tickHave').onclick=function(){OWNED.forEach(function(k){state.have.add(k);});syncChips();render();};
+document.getElementById('clearHave').onclick=function(){state.have.clear();syncChips();render();};
+
+buildChips();syncChips();render();
+</script>
+</body>
+</html>
