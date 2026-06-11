@@ -248,8 +248,8 @@ footer p{max-width:80ch;margin:0 0 9px;}
       <summary><svg class="sic"><use href="#u-cart"/></svg>Pantry &amp; shopping <small>ordered ✓ + supermarket list</small><span class="chev">▸</span></summary>
       <div class="acc-body" id="shop-body">
         <p class="lead"><b>Ordered from iHerb ✓:</b> Allulose, Xanthan, Cocoa powder, Cacao nibs, PB2 peanut + almond butter, Coconut milk powder, Coconut oil.</p>
-        <p><b>Already have:</b> Self vegan protein (choc + vanilla), Oatly Oat 1.5%, Alpro Almond Nutty, Sukrin Melis, Sukrin Marzipan.</p>
-        <p><b>From the supermarket:</b> vanilla extract/paste (Dr. Oetker / Taylor &amp; Colledge), peppermint extract, flaky sea salt, natural peanut butter; banana, strawberries, mixed berries, mango, pineapple, watermelon, cherries, lime &amp; lemon; Cola/Sprite Zero, Fanta Crimson Cherry, sugar-free saft &amp; energy drink, Oreos. <em>For the classic Gladkokken recipes:</em> cream (fløte), whole milk, eggs, sugar, honey, Greek/natural yoghurt, chia, oat cream (Oatly iMat 13%), Oatly Barista, dates, agave syrup, light syrup.</p>
+        <p><b>Already have:</b> Self vegan protein (choc + vanilla), Oatly Oat 1.5%, Oatly Barista, oat cream (Oatly iMat 13%), Alpro Almond Nutty, Sukrin Melis, Sukrin Marzipan; sugar, honey, agave syrup, dates.</p>
+        <p><b>From the supermarket:</b> vanilla extract/paste (Dr. Oetker / Taylor &amp; Colledge), peppermint extract, flaky sea salt, natural peanut butter; banana, strawberries, mixed berries, mango, pineapple, watermelon, cherries, lime &amp; lemon; Cola/Sprite Zero, Fanta Crimson Cherry, sugar-free saft &amp; energy drink, Oreos. <em>For the classic Gladkokken recipes:</em> cream (fløte), whole milk, eggs, Greek/natural yoghurt, chia, light syrup.</p>
       </div>
     </details>
   </section>
@@ -314,19 +314,19 @@ var ING = {
   /* Flavour & add-ons */
   cocoa:{n:'Cocoa powder',g:'Flavour & add-ons'}, 'cacao-nibs':{n:'Cacao nibs',g:'Flavour & add-ons'}, 'dark-choc':{n:'Dark chocolate',g:'Flavour & add-ons'}, 'peanut-butter':{n:'Peanut butter',g:'Flavour & add-ons'}, pb2:{n:'PB2 powder',g:'Flavour & add-ons'}, 'almond-butter':{n:'PB2 almond butter',g:'Flavour & add-ons'}, oreos:{n:'Oreos',g:'Flavour & add-ons'}, 'freeze-dried-rasp':{n:'Freeze-dried raspberry',g:'Flavour & add-ons'}, chia:{n:'Chia seeds',g:'Flavour & add-ons'}, pecans:{n:'Pecans',g:'Flavour & add-ons'},
   /* Extracts & pantry */
-  'vanilla-ext':{n:'Vanilla extract/paste',g:'Extracts & pantry'}, 'almond-ext':{n:'Almond extract',g:'Extracts & pantry'}, 'peppermint-ext':{n:'Peppermint extract',g:'Extracts & pantry'}, xanthan:{n:'Xanthan gum',g:'Extracts & pantry'}, salt:{n:'Salt',g:'Extracts & pantry'}, cinnamon:{n:'Cinnamon',g:'Extracts & pantry'}, rum:{n:'White rum',g:'Extracts & pantry'},
+  'vanilla-ext':{n:'Vanilla extract/paste',g:'Extracts & pantry'}, 'almond-ext':{n:'Almond extract',g:'Extracts & pantry'}, 'peppermint-ext':{n:'Peppermint extract',g:'Extracts & pantry'}, xanthan:{n:'Xanthan gum',g:'Extracts & pantry'}, salt:{n:'Salt',g:'Extracts & pantry'}, rum:{n:'White rum',g:'Extracts & pantry'},
   /* Drinks */
   'cola-zero':{n:'Cola Zero',g:'Drinks'}, 'sprite-zero':{n:'Sprite Zero',g:'Drinks'}, fanta:{n:'Fanta Crimson Cherry',g:'Drinks'}, 'sugarfree-saft':{n:'Sugar-free saft',g:'Drinks'}, 'energy-drink':{n:'Sugar-free energy drink',g:'Drinks'}, sprite:{n:'Sprite',g:'Drinks'}
 };
 /* ingredients always assumed on-hand for "what can I make" */
-var BASICS = {water:1, salt:1, lemon:1, lime:1, cinnamon:1};
+var BASICS = {water:1, salt:1, lemon:1, lime:1};
 /* what the user owns/ordered (pre-tick set) */
-var OWNED = ['allulose','sukrin','sukrin-marzipan','oatly','alpro','coconut-cream','self-choc','self-van','cocoa','cacao-nibs','dark-choc','peanut-butter','pb2','almond-butter','oreos','freeze-dried-rasp','vanilla-ext','almond-ext','peppermint-ext','xanthan','salt','banana','strawberry','frozen-berries','mango','pineapple','watermelon','cherry','lemon','lime','cola-zero','sprite-zero','fanta','sugarfree-saft','energy-drink','water'];
+var OWNED = ['allulose','sukrin','sukrin-marzipan','sugar','honey','agave','dates','oatly','oatly-barista','alpro','oat-cream','coconut-cream','self-choc','self-van','cocoa','cacao-nibs','dark-choc','peanut-butter','pb2','almond-butter','oreos','freeze-dried-rasp','vanilla-ext','almond-ext','peppermint-ext','xanthan','salt','banana','strawberry','frozen-berries','mango','pineapple','watermelon','cherry','lemon','lime','cola-zero','sprite-zero','fanta','sugarfree-saft','energy-drink','water'];
 
 /* Tags: key -> {l:label, g:group} */
 var TAGS = {
-  frost:{l:'FROST (protein)',g:'Style'}, classic:{l:'Gladkokken classic',g:'Style'}, neu:{l:'New ingredients',g:'Style'},
-  'high-protein':{l:'High protein',g:'Diet'}, 'low-cal':{l:'Low calorie',g:'Diet'}, 'very-low-cal':{l:'Very low calorie',g:'Diet'}, 'sugar-free':{l:'Sugar-free',g:'Diet'}, vegan:{l:'Vegan',g:'Diet'}, dairy:{l:'Contains dairy',g:'Diet'}, egg:{l:'Contains egg',g:'Diet'},
+  frost:{l:'FROST originals',g:'Style'}, classic:{l:'Gladkokken classic',g:'Style'}, neu:{l:'New-ingredient recipes',g:'Style'},
+  'high-protein':{l:'High protein',g:'Diet'}, 'low-cal':{l:'Low calorie (<350 kcal)',g:'Diet'}, 'very-low-cal':{l:'Very low calorie (<100 kcal)',g:'Diet'}, 'sugar-free':{l:'Sugar-free',g:'Diet'}, vegan:{l:'Vegan',g:'Diet'}, dairy:{l:'Contains dairy',g:'Diet'}, egg:{l:'Contains egg',g:'Diet'},
   chocolate:{l:'Chocolate',g:'Flavour'}, vanilla:{l:'Vanilla',g:'Flavour'}, berry:{l:'Berry',g:'Flavour'}, citrus:{l:'Citrus',g:'Flavour'}, tropical:{l:'Tropical',g:'Flavour'}, nutty:{l:'Nutty',g:'Flavour'}, coffeefree:{l:'Caffeine-free',g:'Flavour'}, caffeine:{l:'Has caffeine',g:'Flavour'},
   nocook:{l:'No-cook',g:'Effort'}, cook:{l:'Stovetop step',g:'Effort'}, quick:{l:'Quick (no 24h freeze)',g:'Effort'}, kid:{l:'Kid-friendly',g:'Effort'},
   creamy:{l:'Creamy',g:'Texture'}, icy:{l:'Icy / sorbet',g:'Texture'}
@@ -792,67 +792,62 @@ var RECIPES = [
  ing:[['oatly','330 ml'],['self-choc','60 g (2 scoops)'],['cocoa','10 g (1½ tbsp)'],['freeze-dried-rasp','10 g'],['allulose','24 g (2 tbsp)'],['xanthan','1.2 g (½ tsp)']],
  method:['Blend everything smooth.','Tub, freeze flat 24 h.','Process on Gelato, Re-spin with a splash of oat drink.'],
  tags:['frost','high-protein','sugar-free','vegan','chocolate','berry','nocook','caffeine','creamy']},
-{no:92,name:'Cinnamon Horchata Protein',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Re-spin',icon:'ic-vanilla',kcal:335,protein:39,per100:67,idx:[3,3,3,0,3,4],
- desc:'Warm cinnamon and vanilla over an oat base — frozen horchata, high-protein and sugar-free.',
- ing:[['oatly','330 ml'],['self-van','45 g (1½ scoops)'],['cinnamon','1 tsp'],['vanilla-ext','5 ml (1 tsp)'],['allulose','24 g (2 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
- method:['Blend everything smooth.','Tub, freeze flat 24 h.','Process on Ice Cream, Re-spin.'],
- tags:['frost','high-protein','sugar-free','vegan','vanilla','nocook','coffeefree','creamy','kid']},
-{no:93,name:'Salted Date-Caramel Protein',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Re-spin',icon:'ic-date',kcal:370,protein:28,per100:74,idx:[4,4,1,0,2,3],
+{no:92,name:'Salted Date-Caramel Protein',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Re-spin',icon:'ic-date',kcal:370,protein:28,per100:74,idx:[4,4,1,0,2,3],
  desc:'Blended dates make a natural caramel — no added sugar — with vanilla protein and a salted edge.',
  ing:[['dates','4, pitted & soaked'],['oatly-barista','280 ml'],['self-van','30 g (1 scoop)'],['salt','2 pinches, flaky'],['vanilla-ext','½ tsp'],['xanthan','0.6 g (¼ tsp)']],
  method:['Soak dates in warm water 10 min, drain.','Blend everything very smooth. Tub, freeze flat 24 h.','Process on Ice Cream, Re-spin with a splash of oat drink.'],
  tags:['frost','high-protein','vegan','nutty','nocook','coffeefree','creamy']},
-{no:94,name:'Pineapple Dole Whip Protein',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Re-spin',icon:'ic-pineapple',kcal:360,protein:33,per100:72,idx:[3,4,3,0,2,3],
+{no:93,name:'Pineapple Dole Whip Protein',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Re-spin',icon:'ic-pineapple',kcal:360,protein:33,per100:72,idx:[3,4,3,0,2,3],
  desc:'The Dole Whip, made high-protein — pineapple and coconut cream with vanilla protein. Tangy, tropical, soft-serve sweet.',
  ing:[['pineapple','150 g'],['coconut-cream','60 ml'],['self-van','30 g (1 scoop)'],['allulose','18 g (1½ tbsp)'],['xanthan','0.6 g (¼ tsp)'],['water','to MAX line',1]],
  method:['Blend smooth, topping with a splash of water to MAX.','Tub, freeze flat 24 h.','Process on Ice Cream, Re-spin with a splash of water.'],
  tags:['frost','high-protein','sugar-free','vegan','tropical','nocook','coffeefree','creamy','kid']},
-{no:95,name:'Mango Lassi Frozen Yoghurt',cat:'cat-fruit',catL:'New · Frozen yoghurt',program:'Frozen Yoghurt + Re-spin',icon:'ic-mango',kcal:420,protein:28,per100:90,idx:[3,3,1,0,2,3],
+{no:94,name:'Mango Lassi Frozen Yoghurt',cat:'cat-fruit',catL:'New · Frozen yoghurt',program:'Frozen Yoghurt + Re-spin',icon:'ic-mango',kcal:420,protein:28,per100:90,idx:[3,3,1,0,2,3],
  desc:'The Indian mango lassi, frozen — thick Greek yoghurt, ripe mango and a little honey. Tangy and tropical.',
  ing:[['greek-yoghurt','300 g'],['mango','150 g'],['honey','20 g (1 tbsp)'],['vanilla-ext','½ tsp',1]],
  method:['Blend everything smooth.','Tub, freeze flat 16–24 h.','Process on Frozen Yoghurt, Re-spin.'],
  tags:['neu','dairy','high-protein','tropical','nocook','creamy','kid']},
-{no:96,name:'Blackberry Protein Froyo',cat:'cat-fruit',catL:'Frozen yoghurt',program:'Frozen Yoghurt + Re-spin',icon:'ic-berry',kcal:295,protein:40,per100:59,idx:[2,3,3,0,3,4],
+{no:95,name:'Blackberry Protein Froyo',cat:'cat-fruit',catL:'Frozen yoghurt',program:'Frozen Yoghurt + Re-spin',icon:'ic-berry',kcal:295,protein:40,per100:59,idx:[2,3,3,0,3,4],
  desc:'Frozen-berry froyo, blackberry edition — dark, tart and 40 g protein for under 300 kcal.',
  ing:[['blackberry','150 g, frozen'],['alpro','250 ml'],['self-van','45 g (1½ scoops)'],['allulose','24 g (2 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
  method:['Blend everything smooth.','Tub, freeze flat 24 h.','Process on Frozen Yoghurt, Re-spin.'],
  tags:['frost','high-protein','low-cal','sugar-free','vegan','berry','nocook','coffeefree']},
-{no:97,name:'Pineapple Protein Froyo',cat:'cat-fruit',catL:'Frozen yoghurt',program:'Frozen Yoghurt + Re-spin',icon:'ic-pineapple',kcal:320,protein:40,per100:64,idx:[3,3,3,0,3,4],
+{no:96,name:'Pineapple Protein Froyo',cat:'cat-fruit',catL:'Frozen yoghurt',program:'Frozen Yoghurt + Re-spin',icon:'ic-pineapple',kcal:320,protein:40,per100:64,idx:[3,3,3,0,3,4],
  desc:'Tropical pineapple protein froyo — sharp and refreshing, 40 g protein.',
  ing:[['pineapple','150 g, frozen'],['alpro','250 ml'],['self-van','45 g (1½ scoops)'],['allulose','18 g (1½ tbsp)'],['xanthan','0.6 g (¼ tsp)']],
  method:['Blend everything smooth.','Tub, freeze flat 24 h.','Process on Frozen Yoghurt, Re-spin.'],
  tags:['frost','high-protein','low-cal','sugar-free','vegan','tropical','nocook','coffeefree']},
-{no:98,name:'Orange Sorbet (FROST)',cat:'cat-fruit',catL:'Sugar-free sorbet',program:'Sorbet + Re-spin',icon:'ic-orange',kcal:140,protein:2,per100:28,idx:[1,4,2,0,2,1],
+{no:97,name:'Orange Sorbet (FROST)',cat:'cat-fruit',catL:'Sugar-free sorbet',program:'Sorbet + Re-spin',icon:'ic-orange',kcal:140,protein:2,per100:28,idx:[1,4,2,0,2,1],
  desc:'Fresh orange sorbet, no added sugar — juice and zest, bright and clean.',
  ing:[['orange-juice','300 ml'],['orange','zest of 1'],['allulose','24 g (2 tbsp)'],['lemon','10 ml',1],['xanthan','0.6 g (¼ tsp)']],
  method:['Whisk everything until the allulose dissolves.','Pour to MAX, freeze flat 24 h.','Process on Sorbet, Re-spin.'],
  tags:['frost','low-cal','sugar-free','vegan','citrus','nocook','coffeefree','icy','kid']},
-{no:99,name:'Lime Sorbet (FROST)',cat:'cat-fruit',catL:'Sugar-free sorbet',program:'Sorbet + Re-spin',icon:'ic-lime',kcal:25,protein:0,per100:5,idx:[1,3,4,0,2,1],
+{no:98,name:'Lime Sorbet (FROST)',cat:'cat-fruit',catL:'Sugar-free sorbet',program:'Sorbet + Re-spin',icon:'ic-lime',kcal:25,protein:0,per100:5,idx:[1,3,4,0,2,1],
  desc:'Sharp, frosty lime sorbet for almost no calories — the lime answer to the lemon sorbet.',
  ing:[['water','380 ml, cold'],['lime','80 ml juice'],['allulose','24 g (2 tbsp)'],['sukrin','12 g, to taste',1],['xanthan','0.6 g (¼ tsp)']],
  method:['Whisk everything until dissolved and lump-free.','Pour to MAX, freeze flat 24 h.','Process on Sorbet, Re-spin with a splash of water.'],
  tags:['frost','very-low-cal','low-cal','sugar-free','vegan','citrus','nocook','coffeefree','icy','kid']},
-{no:100,name:'Strawberry Lemonade Sorbet',cat:'cat-fruit',catL:'Sugar-free sorbet',program:'Sorbet + Re-spin',icon:'ic-strawberry',kcal:95,protein:2,per100:19,idx:[1,3,3,0,2,1],
+{no:99,name:'Strawberry Lemonade Sorbet',cat:'cat-fruit',catL:'Sugar-free sorbet',program:'Sorbet + Re-spin',icon:'ic-strawberry',kcal:95,protein:2,per100:19,idx:[1,3,3,0,2,1],
  desc:'Strawberries and lemon — a frozen strawberry lemonade, sugar-free and sharp-sweet.',
  ing:[['strawberry','200 g'],['water','180 ml'],['lemon','30 ml juice'],['allulose','24 g (2 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
  method:['Blend everything smooth.','Tub, freeze flat 24 h.','Process on Sorbet, Re-spin.'],
  tags:['frost','very-low-cal','low-cal','sugar-free','vegan','berry','citrus','nocook','coffeefree','icy','kid']},
-{no:101,name:'Mango-Pineapple Sorbet',cat:'cat-fruit',catL:'Sugar-free sorbet',program:'Sorbet + Re-spin',icon:'ic-mango',kcal:150,protein:2,per100:30,idx:[1,4,2,0,2,1],
+{no:100,name:'Mango-Pineapple Sorbet',cat:'cat-fruit',catL:'Sugar-free sorbet',program:'Sorbet + Re-spin',icon:'ic-mango',kcal:150,protein:2,per100:30,idx:[1,4,2,0,2,1],
  desc:'Two tropical fruits in one tub — mango and pineapple with a squeeze of lime. Sugar-free.',
  ing:[['mango','150 g'],['pineapple','100 g'],['lime','15 ml (1 tbsp)'],['water','120 ml'],['allulose','18 g (1½ tbsp)'],['xanthan','0.6 g (¼ tsp)']],
  method:['Blend everything smooth.','Tub, freeze flat 24 h.','Process on Sorbet, Re-spin.'],
  tags:['frost','low-cal','sugar-free','vegan','tropical','citrus','nocook','coffeefree','icy','kid']},
-{no:102,name:'Blueberry-Lemon Sorbet',cat:'cat-fruit',catL:'Sugar-free sorbet',program:'Sorbet + Re-spin',icon:'ic-berry',kcal:145,protein:2,per100:29,idx:[1,3,2,0,2,1],
+{no:101,name:'Blueberry-Lemon Sorbet',cat:'cat-fruit',catL:'Sugar-free sorbet',program:'Sorbet + Re-spin',icon:'ic-berry',kcal:145,protein:2,per100:29,idx:[1,3,2,0,2,1],
  desc:'Deep blueberry brightened with lemon — sugar-free, fruit-forward.',
  ing:[['blueberry','250 g'],['water','130 ml'],['lemon','15 ml juice'],['allulose','24 g (2 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
  method:['Blend everything smooth.','Tub, freeze flat 24 h.','Process on Sorbet, Re-spin.'],
  tags:['frost','low-cal','sugar-free','vegan','berry','citrus','nocook','coffeefree','icy']},
-{no:103,name:'Coconut-Lime Protein',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Re-spin',icon:'ic-glass',kcal:420,protein:39,per100:84,idx:[4,3,3,0,3,4],
+{no:102,name:'Coconut-Lime Protein',cat:'cat-protein',catL:'Protein ice cream',program:'Ice Cream + Re-spin',icon:'ic-glass',kcal:420,protein:39,per100:84,idx:[4,3,3,0,3,4],
  desc:'Creamy coconut with a hit of lime — a tropical protein ice cream, like a frozen key-lime-coconut.',
  ing:[['oatly','300 ml'],['self-van','45 g (1½ scoops)'],['coconut-cream','20 g coconut milk powder'],['lime','15 ml juice + zest'],['allulose','24 g (2 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
  method:['Blend everything smooth.','Tub, freeze flat 24 h.','Process on Ice Cream, Re-spin.'],
  tags:['frost','high-protein','sugar-free','vegan','tropical','citrus','nocook','coffeefree','creamy']},
-{no:104,name:'Cherry Limeade Slush',cat:'cat-soda',catL:'Soda slush',program:'Slush + Re-spin',icon:'ic-lime',kcal:45,protein:1,per100:9,idx:[1,3,1,0,2,1],
+{no:103,name:'Cherry Limeade Slush',cat:'cat-soda',catL:'Soda slush',program:'Slush + Re-spin',icon:'ic-lime',kcal:45,protein:1,per100:9,idx:[1,3,1,0,2,1],
  desc:'Sprite Zero with real cherries and a squeeze of lime — a frozen cherry limeade for ~45 kcal.',
  ing:[['sprite-zero','400 ml, half-flat'],['cherry','60 g, frozen pitted'],['lime','15 ml (1 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
  method:['Stir out the fizz, blend with cherries, lime and xanthan.','Pour to MAX with headroom, freeze 24 h.','Process on Slush, Re-spin.'],
