@@ -478,7 +478,10 @@ window.FrostSync = (function(){
       render(); buildPantry();        // reflect anything merged in from another device
     } catch(e){
       lastError = (e&&e.message) ? e.message : String(e);
-      console.warn("sync failed", e); syncStatus = "error"; renderConnBar();
+      console.warn("sync failed", e); syncStatus = "error";
+      // a scope/auth error can't be retried with the same token — drop it so one reconnect fixes it
+      if(/\bscope\b|401|invalid_access_token|expired_access_token/i.test(lastError)) clearTokens();
+      renderConnBar();
     }
   }
   function schedule(){ if(!isConnected()) return; clearTimeout(timer); timer = setTimeout(syncNow, 2000); }
