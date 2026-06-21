@@ -118,3 +118,48 @@ export function feedbackMatch(recipe, fbFilters, doc) {
   }
   return true;
 }
+
+/* ---- PKCE + Dropbox auth helpers (use Web Crypto, available in browsers and Node 22) ---- */
+export function base64UrlFromBytes(bytes) {
+  let s = '';
+  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+export function randomVerifier(len = 64) {
+  const bytes = new Uint8Array(len);
+  crypto.getRandomValues(bytes);
+  return base64UrlFromBytes(bytes);
+}
+
+export async function pkceChallenge(verifier) {
+  const data = new TextEncoder().encode(verifier);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return base64UrlFromBytes(new Uint8Array(digest));
+}
+
+export function buildAuthUrl({ appKey, redirectUri, challenge, scope }) {
+  const p = new URLSearchParams({
+    client_id: appKey,
+    response_type: 'code',
+    code_challenge: challenge,
+    code_challenge_method: 'S256',
+    redirect_uri: redirectUri,
+    token_access_type: 'offline',
+    scope
+  });
+  return 'https://www.dropbox.com/oauth2/authorize?' + p.toString();
+}
+
+export function tokenExchangeBody({ code, verifier, appKey, redirectUri }) {
+  return new URLSearchParams({
+    code, grant_type: 'authorization_code',
+    code_verifier: verifier, client_id: appKey, redirect_uri: redirectUri
+  });
+}
+
+export function tokenRefreshBody({ refreshToken, appKey }) {
+  return new URLSearchParams({
+    grant_type: 'refresh_token', refresh_token: refreshToken, client_id: appKey
+  });
+}
