@@ -34,3 +34,58 @@ export function merge(localDoc, remoteDoc) {
   const pantry = (b.pantry.updated > a.pantry.updated) ? b.pantry : a.pantry;
   return { version: DOC_VERSION, updated: Math.max(a.updated, b.updated), recipes, pantry };
 }
+
+/* ---- feedback ---- */
+export function getFeedback(doc, no) {
+  const d = normalizeDoc(doc);
+  const fb = d.recipes[String(no)];
+  return fb ? { made: !!fb.made, stars: fb.stars|0, note: fb.note || '' }
+            : { made: false, stars: 0, note: '' };
+}
+
+export function setFeedback(doc, no, patch, now) {
+  const d = normalizeDoc(doc);
+  const key = String(no);
+  const cur = d.recipes[key] || { made:false, stars:0, note:'' };
+  const next = {
+    made:  ('made'  in patch) ? !!patch.made                            : !!cur.made,
+    stars: ('stars' in patch) ? Math.max(0, Math.min(5, patch.stars|0)) : (cur.stars|0),
+    note:  ('note'  in patch) ? String(patch.note)                      : (cur.note || ''),
+    updated: now
+  };
+  return { ...d, updated: now, recipes: { ...d.recipes, [key]: next } };
+}
+
+/* ---- pantry ---- */
+export const PANTRY_STATES = ['none', 'ordered', 'stock'];
+
+export function nextPantryState(cur) {
+  const i = PANTRY_STATES.indexOf(cur);
+  return PANTRY_STATES[(i + 1) % PANTRY_STATES.length];
+}
+
+export function getPantryState(doc, key) {
+  return normalizeDoc(doc).pantry.items[key] || 'none';
+}
+
+export function setPantryState(doc, key, state, now) {
+  const d = normalizeDoc(doc);
+  const items = { ...d.pantry.items };
+  if (state === 'none') delete items[key]; else items[key] = state;
+  return { ...d, updated: now, pantry: { updated: now, items } };
+}
+
+export function setPantryMany(doc, keys, state, now) {
+  const d = normalizeDoc(doc);
+  const items = { ...d.pantry.items };
+  for (const k of keys) { if (state === 'none') delete items[k]; else items[k] = state; }
+  return { ...d, updated: now, pantry: { updated: now, items } };
+}
+
+export function recipeRequiredKeys(recipe, basics) {
+  return recipe.ing.filter(x => !x[2] && !basics[x[0]]).map(x => x[0]);
+}
+
+export function canMake(recipe, pantryItems, basics) {
+  return recipeRequiredKeys(recipe, basics).every(k => pantryItems[k] === 'stock');
+}
