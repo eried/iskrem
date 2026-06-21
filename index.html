@@ -296,6 +296,7 @@ footer p{max-width:80ch;margin:0 0 9px;}
       <div class="search"><svg><use href="#u-search"/></svg><input id="q" type="search" placeholder="Search recipes or ingredients…" autocomplete="off" /></div>
       <button class="fbtn" id="toggleFilters">Filters</button>
       <button class="fbtn" id="resetBtn">Reset</button>
+      <span id="connbar" class="fbtn" style="gap:8px"></span>
     </div>
     <div class="filter-groups" id="filterGroups">
       <div class="fgroup">
@@ -368,6 +369,112 @@ function saveDocLocal(doc) {
   DOC = doc;
   try { localStorage.setItem(DOC_KEY, JSON.stringify(doc)); } catch (e) { /* private mode: in-memory only */ }
 }
+
+/* ============================ DROPBOX AUTH ============================ */
+const TOK_KEY = "frost.dbx.tok.v1";
+let lastSync = 0, syncStatus = "idle";
+function loadTokens(){ try { return JSON.parse(localStorage.getItem(TOK_KEY) || "null"); } catch(e){ return null; } }
+function saveTokens(t){ try { localStorage.setItem(TOK_KEY, JSON.stringify(t)); } catch(e){} }
+function clearTokens(){ try { localStorage.removeItem(TOK_KEY); } catch(e){} }
+function isConnected(){ return !!loadTokens(); }
+
+async function dbxConnect(){
+  const verifier = Store.randomVerifier();
+  sessionStorage.setItem("frost.pkce", verifier);
+  const challenge = await Store.pkceChallenge(verifier);
+  location.href = Store.buildAuthUrl({ appKey:DROPBOX_APP_KEY, redirectUri:DROPBOX_REDIRECT_URI, challenge, scope:OAUTH_SCOPE });
+}
+
+function dbxDisconnect(){ clearTokens(); renderConnBar(); }
+
+async function dbxExchangeCode(code){
+  const verifier = sessionStorage.getItem("frost.pkce");
+  const body = Store.tokenExchangeBody({ code, verifier, appKey:DROPBOX_APP_KEY, redirectUri:DROPBOX_REDIRECT_URI });
+  const r = await fetch("https://api.dropboxapi.com/oauth2/token",
+    { method:"POST", headers:{ "Content-Type":"application/x-www-form-urlencoded" }, body });
+  if(!r.ok) throw new Error("token exchange failed: "+r.status);
+  const j = await r.json();
+  saveTokens({ access:j.access_token, refresh:j.refresh_token, exp: Date.now() + (j.expires_in*1000) - 60000 });
+  sessionStorage.removeItem("frost.pkce");
+}
+
+async function dbxAccessToken(){
+  let t = loadTokens(); if(!t) return null;
+  if(Date.now() < t.exp) return t.access;
+  const body = Store.tokenRefreshBody({ refreshToken:t.refresh, appKey:DROPBOX_APP_KEY });
+  const r = await fetch("https://api.dropboxapi.com/oauth2/token",
+    { method:"POST", headers:{ "Content-Type":"application/x-www-form-urlencoded" }, body });
+  if(!r.ok){ clearTokens(); renderConnBar(); return null; }
+  const j = await r.json();
+  t.access = j.access_token; t.exp = Date.now() + (j.expires_in*1000) - 60000;
+  if(j.refresh_token) t.refresh = j.refresh_token;
+  saveTokens(t); return t.access;
+}
+
+async function dbxHandleRedirect(){
+  const params = new URLSearchParams(location.search);
+  const code = params.get("code");
+  if(!code) return false;
+  try { await dbxExchangeCode(code); }
+  catch(e){ console.warn("Dropbox connect failed", e); }
+  history.replaceState({}, "", DROPBOX_REDIRECT_URI);
+  return true;
+}
+
+function renderConnBar(){
+  const el = document.getElementById("connbar"); if(!el) return;
+  if(!isConnected()){
+    el.innerHTML = '<button id="dbxConnect" class="fbtn active" style="height:auto;padding:4px 12px">Connect Dropbox</button>';
+    el.querySelector("#dbxConnect").onclick = dbxConnect;
+    return;
+  }
+  const when = lastSync ? new Date(lastSync).toLocaleTimeString() : "—";
+  const label = syncStatus==="syncing" ? "syncing…" : syncStatus==="error" ? "sync error" : "Synced ✓";
+  el.innerHTML = '<span title="Dropbox">'+label+' · '+when+'</span> <button id="dbxOff" class="fb-clear" style="margin-left:6px">disconnect</button>';
+  el.querySelector("#dbxOff").onclick = dbxDisconnect;
+}
+
+/* ============================ DROPBOX FILES ============================ */
+async function dbxDownload(){
+  const tok = await dbxAccessToken(); if(!tok) return null;
+  const r = await fetch("https://content.dropboxapi.com/2/files/download",
+    { method:"POST", headers:{ "Authorization":"Bearer "+tok, "Dropbox-API-Arg": JSON.stringify({ path:DROPBOX_FILE_PATH }) } });
+  if(r.status===409) return Store.emptyDoc();         // path/not_found -> empty remote
+  if(!r.ok) throw new Error("download failed: "+r.status);
+  const text = await r.text();
+  try { return Store.normalizeDoc(JSON.parse(text)); } catch(e){ return Store.emptyDoc(); }
+}
+async function dbxUpload(doc){
+  const tok = await dbxAccessToken(); if(!tok) return;
+  const r = await fetch("https://content.dropboxapi.com/2/files/upload",
+    { method:"POST", headers:{
+        "Authorization":"Bearer "+tok,
+        "Dropbox-API-Arg": JSON.stringify({ path:DROPBOX_FILE_PATH, mode:"overwrite", mute:true }),
+        "Content-Type":"application/octet-stream"
+      }, body: JSON.stringify(doc) });
+  if(!r.ok) throw new Error("upload failed: "+r.status);
+}
+
+/* ============================ SYNC ============================ */
+window.FrostSync = (function(){
+  let timer = null;
+  async function syncNow(){
+    if(!isConnected()) return;
+    syncStatus = "syncing"; renderConnBar();
+    try {
+      const remote = await dbxDownload();
+      const merged = Store.merge(DOC, remote || Store.emptyDoc());
+      saveDocLocal(merged);
+      await dbxUpload(merged);
+      lastSync = Date.now(); syncStatus = "synced"; renderConnBar();
+      render(); buildPantry();        // reflect anything merged in from another device
+    } catch(e){
+      console.warn("sync failed", e); syncStatus = "error"; renderConnBar();
+    }
+  }
+  function schedule(){ if(!isConnected()) return; clearTimeout(timer); timer = setTimeout(syncNow, 2000); }
+  return { schedule, syncNow };
+})();
 
 /* ============================ DATA ============================ */
 /* Canonical ingredients: key -> {n:name, g:group}. Order within group = display order. */
@@ -1187,7 +1294,12 @@ document.getElementById('focusClose').onclick=closeFocus;
 document.getElementById('focus').onclick=function(ev){if(ev.target===this)closeFocus();};
 document.addEventListener('keydown',function(ev){if(ev.key==='Escape')closeFocus();});
 
-buildChips();buildPantry();syncChips();render();
+(async function(){
+  await dbxHandleRedirect();
+  buildChips(); buildPantry(); syncChips(); render();
+  renderConnBar();
+  if(isConnected()) window.FrostSync.syncNow();
+})();
 </script>
 </body>
 </html>
