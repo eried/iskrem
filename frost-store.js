@@ -89,3 +89,32 @@ export function recipeRequiredKeys(recipe, basics) {
 export function canMake(recipe, pantryItems, basics) {
   return recipeRequiredKeys(recipe, basics).every(k => pantryItems[k] === 'stock');
 }
+
+/* ---- sort + feedback filter ---- */
+function starsOf(doc, no) { return (normalizeDoc(doc).recipes[String(no)] || {}).stars || 0; }
+function madeOf(doc, no)  { return (normalizeDoc(doc).recipes[String(no)] || {}).made ? 1 : 0; }
+
+export function sortRecipes(list, mode, doc) {
+  const arr = list.slice();
+  const byNo = (a, b) => a.no - b.no;
+  switch (mode) {
+    case 'rating':  arr.sort((a,b) => (starsOf(doc,b.no)-starsOf(doc,a.no)) || byNo(a,b)); break;
+    case 'made':    arr.sort((a,b) => (madeOf(doc,b.no)-madeOf(doc,a.no))   || byNo(a,b)); break;
+    case 'protein': arr.sort((a,b) => (b.protein-a.protein)                 || byNo(a,b)); break;
+    case 'kcal':    arr.sort((a,b) => (a.kcal-b.kcal)                       || byNo(a,b)); break;
+    default:        arr.sort(byNo);
+  }
+  return arr;
+}
+
+export function feedbackMatch(recipe, fbFilters, doc) {
+  if (!fbFilters || fbFilters.size === 0) return true;
+  const fb = normalizeDoc(doc).recipes[String(recipe.no)] || null;
+  const rated = !!(fb && (fb.made || (fb.stars|0) > 0 || (fb.note && fb.note.trim())));
+  for (const f of fbFilters) {
+    if (f === 'made'    && !(fb && fb.made)) return false;
+    if (f === 'fav'     && !(fb && (fb.stars|0) >= 4)) return false;
+    if (f === 'unrated' && rated) return false;
+  }
+  return true;
+}
