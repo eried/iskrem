@@ -134,6 +134,15 @@ details.acc>summary small{font-family:var(--font-body);color:var(--ink-faint);fo
 .fb-clear{border:0;background:none;color:var(--ink-faint);cursor:pointer;font-size:.74rem;border-bottom:1px dotted var(--line);}
 .fb-note{width:100%;min-height:64px;border:1px solid var(--line);border-radius:4px;background:var(--white);padding:10px 12px;font-family:var(--font-body);font-size:.9rem;color:var(--ink);resize:vertical;}
 .fb-saved{font-size:.7rem;color:var(--sage);margin-left:auto;}
+
+/* pantry tri-state chips */
+.pantry-chip{font-size:.78rem;border:1px solid var(--line);background:var(--white);color:var(--ink-soft);border-radius:30px;padding:5px 12px;cursor:pointer;user-select:none;white-space:nowrap;transition:.12s;}
+.pantry-chip[data-st="ordered"]{background:var(--amber);border-color:var(--amber);color:#fff;}
+.pantry-chip[data-st="stock"]{background:var(--sage);border-color:var(--sage);color:#fff;}
+.pantry-chip .mk{opacity:.85;margin-left:6px;font-size:.66rem;letter-spacing:.04em;}
+.pantry-legend{display:flex;gap:14px;align-items:center;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 10px;}
+.pantry-legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px;}
+.pantry-legend .o{background:var(--amber);} .pantry-legend .s{background:var(--sage);}
 .idx.spin .dots .on{color:#8a8475;} .idx.lax .dots .on{color:var(--amber);} .idx.caf .dots .on{color:#a85b3c;}
 .block-h{font-family:var(--font-body);font-weight:600;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--sage);margin:18px 0 9px;padding-bottom:6px;border-bottom:1px solid var(--line);}
 .ingredients{list-style:none;margin:0;padding:0;}
@@ -283,8 +292,14 @@ footer p{max-width:80ch;margin:0 0 9px;}
       <div class="fgroup">
         <h5>Filter by ingredient
           <span class="toolbar" style="display:inline-flex"><span class="andor"><button id="ingAnyBtn" class="on">Uses any</button><button id="ingAllBtn">Uses all</button><button id="ingMakeBtn">Can make</button></span></span>
-          <span class="mini" id="tickHave">tick what I have/ordered</span> · <span class="mini" id="allHave">select all</span> · <span class="mini" id="clearHave">clear</span></h5>
+          <span class="mini" id="allHave">select all</span> · <span class="mini" id="clearHave">clear</span></h5>
         <div class="chips" id="ingChips"></div>
+      </div>
+      <div class="fgroup">
+        <h5>My Pantry — what I've ordered / have in stock
+          <span class="mini" id="pantryFill">quick-fill my usual</span> · <span class="mini" id="pantryClear">clear</span></h5>
+        <div class="pantry-legend"><span><i class="o"></i>ordered</span><span><i class="s"></i>in stock</span><span>click to cycle</span></div>
+        <div class="chips" id="pantryChips"></div>
       </div>
       <div class="fgroup">
         <h5>Tags &amp; categories <span class="toolbar" style="display:inline-flex"><span class="andor"><button id="orBtn" class="on">Any</button><button id="andBtn">All</button></span></span> <span class="mini" id="allTags">select all</span> · <span class="mini" id="clearTags">clear</span></h5>
@@ -302,7 +317,7 @@ footer p{max-width:80ch;margin:0 0 9px;}
   <footer>
     <h4>Notes</h4>
     <p><b>Calories &amp; macros</b> are per whole 500 ml pot — honest estimates from product labels and standard food data, not lab values. The classic Gladkokken recipes use real sugar/cream/egg (higher calorie, lower protein); the FROST recipes are sugar-free/high-protein.</p>
-    <p><b>Indices</b> (filled = more): Protein, Creamy, Sweet, Re-spin (churning needed), Laxative (sugar-alcohol load for the whole pot at once) + Caffeine where relevant. <b>Ingredient filter:</b> "Uses any" shows recipes containing any ingredient you pick, "Uses all" needs all of them, and "Can make" hides recipes needing an ingredient you haven't ticked (water, salt &amp; lemon are assumed on hand — use "tick what I have/ordered" to fill your pantry).</p>
+    <p><b>Indices</b> (filled = more): Protein, Creamy, Sweet, Re-spin (churning needed), Laxative (sugar-alcohol load for the whole pot at once) + Caffeine where relevant. <b>Ingredient filter:</b> "Uses any" shows recipes containing any ingredient you pick, "Uses all" needs all of them, and "Can make" hides recipes needing an ingredient you don't have in stock (water, salt &amp; lemon are assumed on hand — use the <b>My Pantry</b> section to mark what you've ordered or have in stock; only in-stock items count).</p>
     <p style="color:var(--ink-faint);font-size:.8rem;">FROST — Gladkokken 12-in-1. Classic recipes adapted from the official Gladkokken oppskrifter booklet.</p>
   </footer>
 </div>
@@ -904,9 +919,9 @@ function recipeRequires(r){ /* required (non-opt, non-basic) ingredient keys */
 }
 function recipeHasIng(r,k){ return r.ing.some(function(x){return x[0]===k;}); }
 function ingMatch(r){
+  if(state.haveMode==='make') return Store.canMake(r, pantryStock(), BASICS);                       /* pantry: all required in stock */
   if(state.have.size===0) return true;
   var arr=[...state.have];
-  if(state.haveMode==='make') return recipeRequires(r).every(function(k){return state.have.has(k);}); /* pantry: have all required */
   if(state.haveMode==='all')  return arr.every(function(k){return recipeHasIng(r,k);});            /* recipe uses all selected */
   return arr.some(function(k){return recipeHasIng(r,k);});                                          /* 'any': recipe uses at least one */
 }
@@ -982,7 +997,7 @@ function cardHTML(r){
     +(r.idx[3]>0?idxItem('caf','Caffeine',r.idx[3]):'')+'</div>';
   var ings=r.ing.map(function(x){
     var name=(ING[x[0]]||{}).n||x[0];
-    var miss=(state.haveMode==='make' && state.have.size>0 && !x[2] && !BASICS[x[0]] && !state.have.has(x[0]));
+    var miss=(state.haveMode==='make' && !x[2] && !BASICS[x[0]] && Store.getPantryState(DOC,x[0])!=='stock');
     return '<li class="'+(x[2]?'opt ':'')+(miss?'miss':'')+'"><span class="nm">'+esc(name)+'</span><span class="q">'+esc(x[1])+'</span></li>';
   }).join('');
   var steps=r.method.map(function(m){return '<li>'+m+'</li>';}).join('');
@@ -1005,6 +1020,46 @@ function cardHTML(r){
     +'</article>';
 }
 function idxItem(cls,label,val){return '<span class="idx '+cls+'"><span>'+label+'</span><span class="dots">'+dots(val)+'</span></span>';}
+
+/* ============================ PANTRY ============================ */
+function pantryStock(){
+  var items = Store.normalizeDoc(DOC).pantry.items, out={};
+  for(var k in items) if(items[k]==='stock') out[k]='stock';
+  return out;
+}
+function pantryGroupKeys(g){return Object.keys(ING).filter(function(k){return ING[k].g===g;});}
+function buildPantry(){
+  var groups={}; Object.keys(ING).forEach(function(k){var g=ING[k].g;(groups[g]=groups[g]||[]).push(k);});
+  var html='';
+  Object.keys(groups).forEach(function(g){
+    var ks=groups[g];
+    var allStock = ks.every(function(k){return Store.getPantryState(DOC,k)==='stock';});
+    html+='<button type="button" class="grouphd" data-pg="'+esc(g)+'">'+esc(g)+' <span class="ga">'+(allStock?'clear':'all in stock')+'</span></button>';
+    ks.forEach(function(k){
+      var st=Store.getPantryState(DOC,k);
+      var mk= st==='ordered'?'<span class="mk">ordered</span>': st==='stock'?'<span class="mk">in stock</span>':'';
+      html+='<span class="pantry-chip" data-k="'+k+'" data-st="'+st+'">'+esc(ING[k].n)+mk+'</span>';
+    });
+  });
+  document.getElementById('pantryChips').innerHTML=html;
+  document.querySelectorAll('#pantryChips .pantry-chip').forEach(function(el){ el.onclick=function(){ cyclePantry(el.dataset.k); }; });
+  document.querySelectorAll('#pantryChips .grouphd').forEach(function(el){ el.onclick=function(){ togglePantryGroup(el.dataset.pg); }; });
+}
+function cyclePantry(key){
+  var next = Store.nextPantryState(Store.getPantryState(DOC,key));
+  saveDocLocal(Store.setPantryState(DOC, key, next, Date.now()));
+  if (window.FrostSync) window.FrostSync.schedule();
+  buildPantry();
+  if(state.haveMode==='make') render();
+}
+function togglePantryGroup(g){
+  var ks=pantryGroupKeys(g);
+  var allStock = ks.length && ks.every(function(k){return Store.getPantryState(DOC,k)==='stock';});
+  saveDocLocal(Store.setPantryMany(DOC, ks, allStock?'none':'stock', Date.now()));
+  if (window.FrostSync) window.FrostSync.schedule();
+  buildPantry();
+  if(state.haveMode==='make') render();
+}
 
 function render(){
   var list=RECIPES.filter(function(r){return ingMatch(r)&&tagMatch(r)&&qMatch(r);});
@@ -1073,7 +1128,16 @@ document.getElementById('resetBtn').onclick=function(){state.have.clear();state.
 document.getElementById('q').oninput=function(){state.q=this.value.trim();render();};
 document.getElementById('orBtn').onclick=function(){state.tagMode='or';this.classList.add('on');document.getElementById('andBtn').classList.remove('on');render();};
 document.getElementById('andBtn').onclick=function(){state.tagMode='and';this.classList.add('on');document.getElementById('orBtn').classList.remove('on');render();};
-document.getElementById('tickHave').onclick=function(){OWNED.forEach(function(k){state.have.add(k);});syncChips();setHaveMode('make');};
+document.getElementById('pantryFill').onclick=function(){
+  saveDocLocal(Store.setPantryMany(DOC, OWNED, 'stock', Date.now()));
+  if (window.FrostSync) window.FrostSync.schedule();
+  buildPantry(); if(state.haveMode==='make') render();
+};
+document.getElementById('pantryClear').onclick=function(){
+  saveDocLocal(Store.setPantryMany(DOC, Object.keys(ING), 'none', Date.now()));
+  if (window.FrostSync) window.FrostSync.schedule();
+  buildPantry(); if(state.haveMode==='make') render();
+};
 document.getElementById('allHave').onclick=function(){Object.keys(ING).forEach(function(k){state.have.add(k);});syncChips();render();};
 document.getElementById('clearHave').onclick=function(){state.have.clear();syncChips();render();};
 document.getElementById('allTags').onclick=function(){Object.keys(TAGS).forEach(function(k){state.tags.add(k);});syncChips();render();};
@@ -1091,7 +1155,7 @@ document.getElementById('focusClose').onclick=closeFocus;
 document.getElementById('focus').onclick=function(ev){if(ev.target===this)closeFocus();};
 document.addEventListener('keydown',function(ev){if(ev.key==='Escape')closeFocus();});
 
-buildChips();syncChips();render();
+buildChips();buildPantry();syncChips();render();
 </script>
 </body>
 </html>
