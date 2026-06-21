@@ -123,8 +123,8 @@ details.acc>summary small{font-family:var(--font-body);color:var(--ink-faint);fo
 .fb-badge{display:flex;align-items:center;gap:8px;margin:10px 0 0;font-size:.74rem;color:var(--ink-faint);}
 .fb-badge .stars{color:var(--amber);letter-spacing:1px;font-size:.9rem;}
 .fb-badge .made{font-weight:600;color:var(--sage-deep);border:1px solid var(--line);border-radius:30px;padding:2px 9px;letter-spacing:.08em;text-transform:uppercase;font-size:.62rem;}
-.fb-editor{margin:16px 0 0;padding:16px 0 0;border-top:1px solid var(--line-soft);}
-.fb-editor h4{font-family:var(--font-body);font-weight:600;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 10px;}
+.fb-editor{margin:18px 0 0;padding:16px;border:1px solid var(--line);border-radius:5px;background:var(--paper);}
+.fb-editor h4{font-family:var(--font-body);font-weight:600;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--sage);margin:0 0 10px;}
 .fb-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px;}
 .fb-made{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:.9rem;color:var(--ink);}
 .fb-made input{width:18px;height:18px;accent-color:var(--sage);}
@@ -356,7 +356,7 @@ const DROPBOX_REDIRECT_URI =
   location.hostname === "localhost"
     ? "http://localhost:8000/"
     : "https://ried.cl/iskrem/";
-const OAUTH_SCOPE = "files.content.read files.content.write account_info.read";
+const OAUTH_SCOPE = "files.content.read files.content.write";  // only what we actually use
 
 /* ============================ LOCAL STORE ============================ */
 const DOC_KEY = "frost.feedback.v1";
@@ -372,7 +372,7 @@ function saveDocLocal(doc) {
 
 /* ============================ DROPBOX AUTH ============================ */
 const TOK_KEY = "frost.dbx.tok.v1";
-let lastSync = 0, syncStatus = "idle";
+let lastSync = 0, syncStatus = "idle", lastError = "";
 function loadTokens(){ try { return JSON.parse(localStorage.getItem(TOK_KEY) || "null"); } catch(e){ return null; } }
 function saveTokens(t){ try { localStorage.setItem(TOK_KEY, JSON.stringify(t)); } catch(e){} }
 function clearTokens(){ try { localStorage.removeItem(TOK_KEY); } catch(e){} }
@@ -392,7 +392,7 @@ async function dbxExchangeCode(code){
   const body = Store.tokenExchangeBody({ code, verifier, appKey:DROPBOX_APP_KEY, redirectUri:DROPBOX_REDIRECT_URI });
   const r = await fetch("https://api.dropboxapi.com/oauth2/token",
     { method:"POST", headers:{ "Content-Type":"application/x-www-form-urlencoded" }, body });
-  if(!r.ok) throw new Error("token exchange failed: "+r.status);
+  if(!r.ok){ const t = await r.text().catch(function(){return "";}); throw new Error(r.status+" "+t.slice(0,160)); }
   const j = await r.json();
   saveTokens({ access:j.access_token, refresh:j.refresh_token, exp: Date.now() + (j.expires_in*1000) - 60000 });
   sessionStorage.removeItem("frost.pkce");
@@ -415,8 +415,8 @@ async function dbxHandleRedirect(){
   const params = new URLSearchParams(location.search);
   const code = params.get("code");
   if(!code) return false;
-  try { await dbxExchangeCode(code); }
-  catch(e){ console.warn("Dropbox connect failed", e); }
+  try { await dbxExchangeCode(code); lastError = ""; }
+  catch(e){ lastError = "connect: "+((e&&e.message)||e); console.warn("Dropbox connect failed", e); }
   history.replaceState({}, "", DROPBOX_REDIRECT_URI);
   return true;
 }
@@ -426,10 +426,18 @@ function renderConnBar(){
   if(!isConnected()){
     el.innerHTML = '<button id="dbxConnect" class="fbtn active" style="height:auto;padding:4px 12px">Connect Dropbox</button>';
     el.querySelector("#dbxConnect").onclick = dbxConnect;
+    if(lastError){ var w=document.createElement('span'); w.className='fb-clear'; w.style.color='var(--berry)'; w.style.marginLeft='8px'; w.textContent='⚠ '+lastError; el.appendChild(w); }
     return;
   }
   const when = lastSync ? new Date(lastSync).toLocaleTimeString() : "—";
-  const label = syncStatus==="syncing" ? "syncing…" : syncStatus==="error" ? "sync error" : "Synced ✓";
+  if(syncStatus==="error"){
+    el.innerHTML = '<button id="dbxRetry" class="fbtn active" style="height:auto;padding:4px 12px">⚠ sync error — retry</button> <button id="dbxOff" class="fb-clear" style="margin-left:6px">disconnect</button>';
+    el.querySelector("#dbxRetry").title = lastError;
+    el.querySelector("#dbxRetry").onclick = function(){ window.FrostSync.syncNow(); };
+    el.querySelector("#dbxOff").onclick = dbxDisconnect;
+    return;
+  }
+  const label = syncStatus==="syncing" ? "syncing…" : "Synced ✓";
   el.innerHTML = '<span title="Dropbox">'+label+' · '+when+'</span> <button id="dbxOff" class="fb-clear" style="margin-left:6px">disconnect</button>';
   el.querySelector("#dbxOff").onclick = dbxDisconnect;
 }
@@ -440,7 +448,7 @@ async function dbxDownload(){
   const r = await fetch("https://content.dropboxapi.com/2/files/download",
     { method:"POST", headers:{ "Authorization":"Bearer "+tok, "Dropbox-API-Arg": JSON.stringify({ path:DROPBOX_FILE_PATH }) } });
   if(r.status===409) return Store.emptyDoc();         // path/not_found -> empty remote
-  if(!r.ok) throw new Error("download failed: "+r.status);
+  if(!r.ok){ const t = await r.text().catch(function(){return "";}); throw new Error("download "+r.status+" "+t.slice(0,160)); }
   const text = await r.text();
   try { return Store.normalizeDoc(JSON.parse(text)); } catch(e){ return Store.emptyDoc(); }
 }
@@ -452,7 +460,7 @@ async function dbxUpload(doc){
         "Dropbox-API-Arg": JSON.stringify({ path:DROPBOX_FILE_PATH, mode:"overwrite", mute:true }),
         "Content-Type":"application/octet-stream"
       }, body: JSON.stringify(doc) });
-  if(!r.ok) throw new Error("upload failed: "+r.status);
+  if(!r.ok){ const t = await r.text().catch(function(){return "";}); throw new Error("upload "+r.status+" "+t.slice(0,160)); }
 }
 
 /* ============================ SYNC ============================ */
@@ -466,9 +474,10 @@ window.FrostSync = (function(){
       const merged = Store.merge(DOC, remote || Store.emptyDoc());
       saveDocLocal(merged);
       await dbxUpload(merged);
-      lastSync = Date.now(); syncStatus = "synced"; renderConnBar();
+      lastSync = Date.now(); syncStatus = "synced"; lastError = ""; renderConnBar();
       render(); buildPantry();        // reflect anything merged in from another device
     } catch(e){
+      lastError = (e&&e.message) ? e.message : String(e);
       console.warn("sync failed", e); syncStatus = "error"; renderConnBar();
     }
   }
@@ -1114,7 +1123,7 @@ function wireFeedbackEditor(rootEl){
     noteT=setTimeout(function(){ applyFeedback(no,{note:val}); flash(); }, 400);
   };
 }
-function cardHTML(r){
+function cardHTML(r, inFocus){
   var idxRow='<div class="indices">'
     +idxItem('','Protein',r.idx[5])+idxItem('','Creamy',r.idx[0])+idxItem('','Sweet',r.idx[1])
     +idxItem('spin','Re-spin',r.idx[4])+idxItem('lax','Laxative',r.idx[2])
@@ -1139,8 +1148,9 @@ function cardHTML(r){
     +'<div class="block-h">Ingredients</div><ul class="ingredients">'+ings+'</ul>'
     +'<div class="block-h">Method</div><ol class="method">'+steps+'</ol>'
     +(r.tip?'<div class="tip"><svg class="ic"><use href="#'+r.tip[0]+'"/></svg><div>'+r.tip[1]+'</div></div>':'')
-    +feedbackBadgeHTML(r)
+    +(inFocus?'':feedbackBadgeHTML(r))
     +'<div class="card-spacer"></div><div class="card-tags">'+tags+'</div>'
+    +(inFocus?feedbackEditorHTML(r):'')
     +'</article>';
 }
 function idxItem(cls,label,val){return '<span class="idx '+cls+'"><span>'+label+'</span><span class="dots">'+dots(val)+'</span></span>';}
@@ -1188,7 +1198,7 @@ function togglePantryGroup(g){
 function render(){
   var list=RECIPES.filter(function(r){return ingMatch(r)&&tagMatch(r)&&qMatch(r)&&Store.feedbackMatch(r,state.fbFilters,DOC);});
   list=Store.sortRecipes(list, state.sort, DOC);
-  document.getElementById('grid').innerHTML=list.map(cardHTML).join('');
+  document.getElementById('grid').innerHTML=list.map(function(r){return cardHTML(r);}).join('');
   document.getElementById('empty').style.display=list.length?'none':'block';
   document.getElementById('count').textContent=list.length+' of '+RECIPES.length+' recipes';
   renderActive();
@@ -1285,7 +1295,7 @@ document.querySelectorAll('#fbChips .chip.fb').forEach(function(el){
 /* focus / reading mode */
 function openFocus(no){
   var r=RECIPES.filter(function(x){return x.no===no;})[0]; if(!r)return;
-  document.getElementById('focusInner').innerHTML = cardHTML(r) + feedbackEditorHTML(r);
+  document.getElementById('focusInner').innerHTML = cardHTML(r, true);
   wireFeedbackEditor(document.getElementById('focusInner'));
   document.getElementById('focus').hidden=false; document.body.style.overflow='hidden';
 }

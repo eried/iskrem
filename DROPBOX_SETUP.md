@@ -14,8 +14,9 @@ one-time step the site owner does so that button works.
      - `https://ried.cl/iskrem/`
      - `https://ried.cl/iskrem`
      - `http://localhost:8000/`
-6. **Permissions tab:** enable `files.content.read`, `files.content.write`,
-   `account_info.read` → **Submit**.
+6. **Permissions tab:** enable `files.content.read` and `files.content.write` → **Submit**.
+   (These are the only scopes the app requests. If you previously enabled
+   `account_info.read`, you can leave or remove it — it's no longer used.)
 7. The app starts in **Development** status — fine for personal/family/friends use.
    If it grows, click **Apply for production** (free).
 
