@@ -71,7 +71,9 @@ details.acc>summary small{font-family:var(--font-body);color:var(--ink-faint);fo
 .fbtn:hover{border-color:var(--sage);color:var(--ink);}
 .fbtn.active{background:var(--sage);color:#fff;border-color:var(--sage);}
 .filter-groups{display:none;gap:16px;flex-direction:column;padding:6px 0 4px;}
-.filter-groups.show{display:flex;}
+.filter-groups.show{display:flex;max-height:58vh;overflow-y:auto;padding-right:4px;}
+.filter-foot{position:sticky;bottom:0;background:var(--paper);padding:12px 0 2px;margin-top:2px;display:flex;justify-content:center;border-top:1px solid var(--line-soft);}
+.filter-foot .fbtn{background:var(--sage);color:#fff;border-color:var(--sage);}
 .fgroup{}
 .fgroup h5{font-family:var(--font-body);font-weight:600;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 8px;display:flex;align-items:center;gap:10px;}
 .fgroup h5 .mini{font-weight:500;letter-spacing:.04em;text-transform:none;color:var(--sage);cursor:pointer;font-size:.72rem;border-bottom:1px dotted var(--line);}
@@ -327,6 +329,7 @@ footer p{max-width:80ch;margin:0 0 9px;}
         <h5>Tags &amp; categories <span class="toolbar" style="display:inline-flex"><span class="andor"><button id="orBtn" class="on">Any</button><button id="andBtn">All</button></span></span> <span class="mini" id="allTags">select all</span> · <span class="mini" id="clearTags">clear</span></h5>
         <div class="chips" id="tagChips"></div>
       </div>
+      <div class="filter-foot"><button type="button" class="fbtn" id="filtersDone">Done — show recipes</button></div>
     </div>
     <div class="active-row" id="activeRow"></div>
   </section>
@@ -1045,7 +1048,12 @@ var RECIPES = [
  desc:'Sprite Zero with real cherries and a squeeze of lime — a frozen cherry limeade for ~45 kcal.',
  ing:[['sprite-zero','400 ml, half-flat'],['cherry','60 g, frozen pitted'],['lime','15 ml (1 tbsp)'],['xanthan','0.6 g (¼ tsp)']],
  method:['Stir out the fizz, blend with cherries, lime and xanthan.','Pour to MAX with headroom, freeze 24 h.','Process on Slush, Re-spin.'],
- tags:['frost','low-cal','sugar-free','vegan','berry','citrus','nocook','coffeefree','icy','kid']}
+ tags:['frost','low-cal','sugar-free','vegan','berry','citrus','nocook','coffeefree','icy','kid']},
+{no:104,name:'Sprite Zero Berry Slush',cat:'cat-soda',catL:'Soda slush',program:'Slush + Re-spin',icon:'ic-berry',kcal:70,protein:1,per100:13,idx:[1,3,1,0,2,0],
+ desc:'The simplest pot here — just Sprite Zero and frozen berries, nothing else. Blend, freeze, churn: a tangy-sweet berry slush for almost no calories.',
+ ing:[['sprite-zero','400 ml, half-flat'],['frozen-berries','150 g']],
+ method:['Stir most of the fizz out of the Sprite Zero, then blend with the frozen berries until smooth.','Pour to MAX with a little headroom, freeze flat 24 h.','Process on Slush, Re-spin with a splash of Sprite Zero if it needs loosening.'],
+ tags:['frost','low-cal','sugar-free','vegan','berry','nocook','coffeefree','icy','kid']}
 ];
 
 /* ============================ STATE & RENDER ============================ */
@@ -1265,7 +1273,14 @@ function setHaveMode(m){state.haveMode=m;
 document.getElementById('ingAnyBtn').onclick=function(){setHaveMode('any');};
 document.getElementById('ingAllBtn').onclick=function(){setHaveMode('all');};
 document.getElementById('ingMakeBtn').onclick=function(){setHaveMode('make');};
-document.getElementById('toggleFilters').onclick=function(){document.getElementById('filterGroups').classList.toggle('show');this.classList.toggle('active');};
+function setFiltersOpen(open){
+  var fg=document.getElementById('filterGroups'), btn=document.getElementById('toggleFilters');
+  fg.classList.toggle('show', open);
+  btn.classList.toggle('active', open);
+  btn.textContent = open ? 'Close filters' : 'Filters';
+}
+document.getElementById('toggleFilters').onclick=function(){ setFiltersOpen(!document.getElementById('filterGroups').classList.contains('show')); };
+document.getElementById('filtersDone').onclick=function(){ setFiltersOpen(false); document.querySelector('.filterbar').scrollIntoView({block:'start'}); };
 document.getElementById('resetBtn').onclick=function(){
   state.have.clear();state.tags.clear();state.q='';document.getElementById('q').value='';
   state.fbFilters.clear();document.querySelectorAll('#fbChips .chip.fb').forEach(function(el){el.classList.remove('on');});
