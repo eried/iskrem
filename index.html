@@ -297,7 +297,30 @@ footer p{max-width:80ch;margin:0 0 9px;}
   <div class="focus-inner" id="focusInner"></div>
 </div>
 
-<script>
+<script type="module">
+import * as Store from './frost-store.js';
+
+/* ============================ CONFIG ============================ */
+const DROPBOX_APP_KEY = "2zmn7d9rz2cdeqr";          // public (PKCE: no secret)
+const DROPBOX_FILE_PATH = "/frost-feedback.json";   // in the App folder
+const DROPBOX_REDIRECT_URI =
+  location.hostname === "localhost"
+    ? "http://localhost:8000/"
+    : "https://ried.cl/iskrem/";
+const OAUTH_SCOPE = "files.content.read files.content.write account_info.read";
+
+/* ============================ LOCAL STORE ============================ */
+const DOC_KEY = "frost.feedback.v1";
+function loadDoc() {
+  try { return Store.normalizeDoc(JSON.parse(localStorage.getItem(DOC_KEY) || "null")); }
+  catch (e) { return Store.emptyDoc(); }
+}
+let DOC = loadDoc();
+function saveDocLocal(doc) {
+  DOC = doc;
+  try { localStorage.setItem(DOC_KEY, JSON.stringify(doc)); } catch (e) { /* private mode: in-memory only */ }
+}
+
 /* ============================ DATA ============================ */
 /* Canonical ingredients: key -> {n:name, g:group}. Order within group = display order. */
 var ING = {
