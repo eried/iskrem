@@ -118,6 +118,22 @@ details.acc>summary small{font-family:var(--font-body);color:var(--ink-faint);fo
 .idx{display:flex;align-items:center;gap:6px;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--ink-faint);white-space:nowrap;}
 .idx .dots{font-size:.74rem;letter-spacing:1.5px;}
 .idx .dots .on{color:var(--accent,var(--sage));} .idx .dots .off{color:var(--line);}
+
+/* feedback badge + editor */
+.fb-badge{display:flex;align-items:center;gap:8px;margin:10px 0 0;font-size:.74rem;color:var(--ink-faint);}
+.fb-badge .stars{color:var(--amber);letter-spacing:1px;font-size:.9rem;}
+.fb-badge .made{font-weight:600;color:var(--sage-deep);border:1px solid var(--line);border-radius:30px;padding:2px 9px;letter-spacing:.08em;text-transform:uppercase;font-size:.62rem;}
+.fb-editor{margin:16px 0 0;padding:16px 0 0;border-top:1px solid var(--line-soft);}
+.fb-editor h4{font-family:var(--font-body);font-weight:600;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 10px;}
+.fb-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px;}
+.fb-made{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:.9rem;color:var(--ink);}
+.fb-made input{width:18px;height:18px;accent-color:var(--sage);}
+.fb-stars{display:inline-flex;gap:3px;}
+.fb-stars button{border:0;background:none;cursor:pointer;font-size:1.4rem;line-height:1;color:var(--line);padding:0;}
+.fb-stars button.on{color:var(--amber);}
+.fb-clear{border:0;background:none;color:var(--ink-faint);cursor:pointer;font-size:.74rem;border-bottom:1px dotted var(--line);}
+.fb-note{width:100%;min-height:64px;border:1px solid var(--line);border-radius:4px;background:var(--white);padding:10px 12px;font-family:var(--font-body);font-size:.9rem;color:var(--ink);resize:vertical;}
+.fb-saved{font-size:.7rem;color:var(--sage);margin-left:auto;}
 .idx.spin .dots .on{color:#8a8475;} .idx.lax .dots .on{color:var(--amber);} .idx.caf .dots .on{color:#a85b3c;}
 .block-h{font-family:var(--font-body);font-weight:600;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--sage);margin:18px 0 9px;padding-bottom:6px;border-bottom:1px solid var(--line);}
 .ingredients{list-style:none;margin:0;padding:0;}
@@ -906,6 +922,59 @@ function qMatch(r){
   return hay.indexOf(state.q.toLowerCase())>=0;
 }
 
+function feedbackBadgeHTML(r){
+  var fb = Store.getFeedback(DOC, r.no);
+  if(!fb.made && !fb.stars) return '';
+  var stars = fb.stars ? '<span class="stars">'+'★'.repeat(fb.stars)+'<span style="color:var(--line)">'+'☆'.repeat(5-fb.stars)+'</span></span>' : '';
+  var made = fb.made ? '<span class="made">✓ Made it</span>' : '';
+  return '<div class="fb-badge">'+made+stars+'</div>';
+}
+function feedbackEditorHTML(r){
+  var fb = Store.getFeedback(DOC, r.no);
+  var stars='';
+  for(var i=1;i<=5;i++) stars+='<button type="button" data-star="'+i+'" class="'+(i<=fb.stars?'on':'')+'">★</button>';
+  return '<div class="fb-editor" data-no="'+r.no+'">'
+    +'<h4>Your feedback</h4>'
+    +'<div class="fb-row">'
+      +'<label class="fb-made"><input type="checkbox" '+(fb.made?'checked':'')+'> Made it</label>'
+      +'<span class="fb-stars">'+stars+'</span>'
+      +'<button type="button" class="fb-clear">clear stars</button>'
+      +'<span class="fb-saved" hidden>saved</span>'
+    +'</div>'
+    +'<textarea class="fb-note" placeholder="What did you change? How was it?">'+esc(fb.note)+'</textarea>'
+  +'</div>';
+}
+function applyFeedback(no, patch){
+  saveDocLocal(Store.setFeedback(DOC, no, patch, Date.now()));
+  if (window.FrostSync) window.FrostSync.schedule();   // no-op until Task 10
+}
+function wireFeedbackEditor(rootEl){
+  var ed = rootEl.querySelector('.fb-editor'); if(!ed) return;
+  var no = +ed.dataset.no;
+  var saved = ed.querySelector('.fb-saved');
+  var flash = function(){ saved.hidden=false; clearTimeout(flash._t); flash._t=setTimeout(function(){saved.hidden=true;},1200); };
+  ed.querySelector('.fb-made input').onchange = function(){ applyFeedback(no,{made:this.checked}); flash(); };
+  ed.querySelectorAll('.fb-stars button').forEach(function(b){
+    b.onclick = function(){
+      var v = +b.dataset.star;
+      var cur = Store.getFeedback(DOC,no).stars;
+      var next = (v===cur) ? v-1 : v;          // click the current top star to step down
+      applyFeedback(no,{stars:next});
+      ed.querySelectorAll('.fb-stars button').forEach(function(x){x.classList.toggle('on', +x.dataset.star<=next);});
+      flash();
+    };
+  });
+  ed.querySelector('.fb-clear').onclick = function(){
+    applyFeedback(no,{stars:0});
+    ed.querySelectorAll('.fb-stars button').forEach(function(x){x.classList.remove('on');});
+    flash();
+  };
+  var noteT=null;
+  ed.querySelector('.fb-note').oninput = function(){
+    var val=this.value; clearTimeout(noteT);
+    noteT=setTimeout(function(){ applyFeedback(no,{note:val}); flash(); }, 400);
+  };
+}
 function cardHTML(r){
   var idxRow='<div class="indices">'
     +idxItem('','Protein',r.idx[5])+idxItem('','Creamy',r.idx[0])+idxItem('','Sweet',r.idx[1])
@@ -931,6 +1000,7 @@ function cardHTML(r){
     +'<div class="block-h">Ingredients</div><ul class="ingredients">'+ings+'</ul>'
     +'<div class="block-h">Method</div><ol class="method">'+steps+'</ol>'
     +(r.tip?'<div class="tip"><svg class="ic"><use href="#'+r.tip[0]+'"/></svg><div>'+r.tip[1]+'</div></div>':'')
+    +feedbackBadgeHTML(r)
     +'<div class="card-spacer"></div><div class="card-tags">'+tags+'</div>'
     +'</article>';
 }
@@ -1010,7 +1080,12 @@ document.getElementById('allTags').onclick=function(){Object.keys(TAGS).forEach(
 document.getElementById('clearTags').onclick=function(){state.tags.clear();syncChips();render();};
 
 /* focus / reading mode */
-function openFocus(no){var r=RECIPES.filter(function(x){return x.no===no;})[0];if(!r)return;document.getElementById('focusInner').innerHTML=cardHTML(r);document.getElementById('focus').hidden=false;document.body.style.overflow='hidden';}
+function openFocus(no){
+  var r=RECIPES.filter(function(x){return x.no===no;})[0]; if(!r)return;
+  document.getElementById('focusInner').innerHTML = cardHTML(r) + feedbackEditorHTML(r);
+  wireFeedbackEditor(document.getElementById('focusInner'));
+  document.getElementById('focus').hidden=false; document.body.style.overflow='hidden';
+}
 function closeFocus(){document.getElementById('focus').hidden=true;document.body.style.overflow='';}
 document.getElementById('focusClose').onclick=closeFocus;
 document.getElementById('focus').onclick=function(ev){if(ev.target===this)closeFocus();};
