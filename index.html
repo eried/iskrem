@@ -60,6 +60,8 @@ details.acc>summary small{font-family:var(--font-body);color:var(--ink-faint);fo
 /* filter bar */
 .filterbar{position:sticky;top:0;z-index:20;background:var(--paper);padding:14px 0 12px;margin-top:14px;border-bottom:1px solid var(--line);}
 .filter-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+.filter-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.filter-actions #connbar{margin-left:auto;font-size:.78rem;color:var(--ink-soft);}
 .filter-head h2{font-size:clamp(1.5rem,3.4vw,2.1rem);}
 .filter-head .count{font-family:var(--font-body);font-weight:600;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--sage);}
 .search{flex:1;min-width:180px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:30px;padding:0 15px;height:38px;background:var(--white);}
@@ -284,6 +286,7 @@ footer p{max-width:80ch;margin:0 0 9px;}
     <div class="filter-head">
       <h2>Recipes</h2>
       <span class="count" id="count">—</span>
+      <div class="search"><svg><use href="#u-search"/></svg><input id="q" type="search" placeholder="Search recipes or ingredients…" autocomplete="off" /></div>
       <label class="fbtn" style="gap:8px;cursor:default">Sort
         <select id="sortSel" style="border:0;background:transparent;font:inherit;color:var(--ink);cursor:pointer;outline:0">
           <option value="default">Recipe №</option>
@@ -293,10 +296,11 @@ footer p{max-width:80ch;margin:0 0 9px;}
           <option value="kcal">Calories</option>
         </select>
       </label>
-      <div class="search"><svg><use href="#u-search"/></svg><input id="q" type="search" placeholder="Search recipes or ingredients…" autocomplete="off" /></div>
+    </div>
+    <div class="filter-actions">
       <button class="fbtn" id="toggleFilters">Filters</button>
       <button class="fbtn" id="resetBtn">Reset</button>
-      <span id="connbar" class="fbtn" style="gap:8px"></span>
+      <span id="connbar" style="display:inline-flex;align-items:center;gap:8px"></span>
     </div>
     <div class="filter-groups" id="filterGroups">
       <div class="fgroup">
