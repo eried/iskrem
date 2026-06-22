@@ -306,7 +306,7 @@ footer p{max-width:80ch;margin:0 0 9px;}
     </div>
     <div class="filter-groups" id="filterGroups">
       <div class="fgroup">
-        <h5>My feedback</h5>
+        <h5>My feedback <span class="mini" id="fbCopy">copy for Claude</span> · <span class="mini" id="fbDownload">download .md</span></h5>
         <div class="chips" id="fbChips">
           <span class="chip fb" data-fb="made">Made it</span>
           <span class="chip fb" data-fb="fav">Favorites (4–5★)</span>
@@ -471,27 +471,39 @@ async function dbxUpload(doc){
 }
 
 /* ============================ SYNC ============================ */
+function wait(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+function isFatalAuthErr(msg){ return /\bscope\b|401|invalid_access_token|expired_access_token/i.test(msg||""); }
 window.FrostSync = (function(){
-  let timer = null;
+  let timer = null, running = false, again = false;
+  async function attempt(){
+    const remote = await dbxDownload();
+    const merged = Store.merge(DOC, remote || Store.emptyDoc());
+    saveDocLocal(merged);
+    await dbxUpload(merged);
+  }
   async function syncNow(){
     if(!isConnected()) return;
+    if(running){ again = true; return; }     // a sync is in flight — coalesce, re-run when it finishes
+    running = true;
     syncStatus = "syncing"; renderConnBar();
-    try {
-      const remote = await dbxDownload();
-      const merged = Store.merge(DOC, remote || Store.emptyDoc());
-      saveDocLocal(merged);
-      await dbxUpload(merged);
+    let ok = false, err = null;
+    for(let i=0; i<3 && !ok; i++){            // serialize + retry transient failures
+      try { await attempt(); ok = true; }
+      catch(e){ err = e; if(isFatalAuthErr((e&&e.message)||"")) break; await wait(500*(i+1)); }
+    }
+    running = false;
+    if(ok){
       lastSync = Date.now(); syncStatus = "synced"; lastError = ""; renderConnBar();
-      render(); buildPantry();        // reflect anything merged in from another device
-    } catch(e){
-      lastError = (e&&e.message) ? e.message : String(e);
-      console.warn("sync failed", e); syncStatus = "error";
-      // a scope/auth error can't be retried with the same token — drop it so one reconnect fixes it
-      if(/\bscope\b|401|invalid_access_token|expired_access_token/i.test(lastError)) clearTokens();
+      render(); buildPantry();               // reflect anything merged in from another device
+    } else {
+      lastError = (err&&err.message) ? err.message : String(err);
+      console.warn("sync failed", err); syncStatus = "error";
+      if(isFatalAuthErr(lastError)) clearTokens();   // can't retry with the same token — drop it
       renderConnBar();
     }
+    if(again){ again = false; if(isConnected()) syncNow(); }  // changes arrived during the sync
   }
-  function schedule(){ if(!isConnected()) return; clearTimeout(timer); timer = setTimeout(syncNow, 2000); }
+  function schedule(){ if(!isConnected()) return; clearTimeout(timer); timer = setTimeout(syncNow, 1500); }
   return { schedule, syncNow };
 })();
 
@@ -1138,6 +1150,49 @@ function wireFeedbackEditor(rootEl){
     noteT=setTimeout(function(){ applyFeedback(no,{note:val}); flash(); }, 400);
   };
 }
+/* ============================ FEEDBACK EXPORT ============================ */
+function buildFeedbackReport(){
+  var doc = Store.normalizeDoc(DOC);
+  var rated = RECIPES.filter(function(r){ var f=doc.recipes[String(r.no)]; return f && (f.made || (f.stars|0)>0 || (f.note&&f.note.trim())); });
+  rated.sort(function(a,b){ var fa=doc.recipes[String(a.no)]||{}, fb=doc.recipes[String(b.no)]||{}; return (fb.stars||0)-(fa.stars||0) || a.no-b.no; });
+  var lines = rated.map(function(r){
+    var f=doc.recipes[String(r.no)];
+    var s=f.stars|0;
+    var stars = s ? '★'.repeat(s)+'☆'.repeat(5-s) : '—';
+    var made = f.made ? 'made it' : 'not made yet';
+    var note = (f.note&&f.note.trim()) ? ' · "'+f.note.trim()+'"' : '';
+    return '- #'+r.no+' '+r.name+' ('+r.catL+') — '+stars+' ('+s+'/5) · '+made+note;
+  });
+  var stock = Object.keys(doc.pantry.items).filter(function(k){return doc.pantry.items[k]==='stock';}).map(function(k){return (ING[k]||{}).n||k;});
+  var ordered = Object.keys(doc.pantry.items).filter(function(k){return doc.pantry.items[k]==='ordered';}).map(function(k){return (ING[k]||{}).n||k;});
+  var out = '# FROST recipe feedback ('+rated.length+' rated of '+RECIPES.length+')\n\n';
+  out += lines.length ? lines.join('\n') : '(no feedback yet)';
+  if(stock.length || ordered.length){
+    out += '\n\n## Pantry\n';
+    if(stock.length)   out += 'In stock: '+stock.join(', ')+'\n';
+    if(ordered.length) out += 'Ordered: '+ordered.join(', ')+'\n';
+  }
+  return out;
+}
+function legacyCopy(text){
+  var ta=document.createElement('textarea'); ta.value=text;
+  ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select();
+  try{ document.execCommand('copy'); }catch(e){} document.body.removeChild(ta);
+}
+function copyText(text, onDone){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(onDone, function(){ legacyCopy(text); if(onDone)onDone(); });
+  } else { legacyCopy(text); if(onDone)onDone(); }
+}
+function downloadFeedback(){
+  var blob = new Blob([buildFeedbackReport()], {type:'text/markdown'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a'); a.href=url; a.download='frost-feedback.md';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+function flashMini(el, msg){ var t=el.dataset.label||el.textContent; el.dataset.label=t; el.textContent=msg; setTimeout(function(){ el.textContent=t; }, 1300); }
+
 function cardHTML(r, inFocus){
   var idxRow='<div class="indices">'
     +idxItem('','Protein',r.idx[5])+idxItem('','Creamy',r.idx[0])+idxItem('','Sweet',r.idx[1])
@@ -1305,6 +1360,8 @@ document.getElementById('clearHave').onclick=function(){state.have.clear();syncC
 document.getElementById('allTags').onclick=function(){Object.keys(TAGS).forEach(function(k){state.tags.add(k);});syncChips();render();};
 document.getElementById('clearTags').onclick=function(){state.tags.clear();syncChips();render();};
 document.getElementById('sortSel').onchange=function(){ state.sort=this.value; render(); };
+document.getElementById('fbCopy').onclick=function(){ var el=this; copyText(buildFeedbackReport(), function(){ flashMini(el,'copied!'); }); };
+document.getElementById('fbDownload').onclick=function(){ downloadFeedback(); };
 document.querySelectorAll('#fbChips .chip.fb').forEach(function(el){
   el.onclick=function(){
     var k=el.dataset.fb;
